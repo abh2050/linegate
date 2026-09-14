@@ -81,13 +81,21 @@ def check_policy(policy: Policy) -> None:
                              f"a trivial policy at ${trivial:,.0f}/shift")
 
 
-def write_outputs(policy: Policy, curve: CostCurve, out_dir: Path = POLICY_DIR) -> None:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "policy.json").write_text(json.dumps(dataclasses.asdict(policy), indent=2) + "\n")
+def policy_json(policy: Policy) -> str:
+    return json.dumps(dataclasses.asdict(policy), indent=2) + "\n"
+
+
+def curve_csv(curve: CostCurve) -> str:
     rows = ["threshold,dollars_per_shift,tp,fp,tn,fn"] + [
         f"{t:.3f},{d:.2f},{a},{b},{c},{e}"
         for t, d, a, b, c, e in zip(curve.thresholds, curve.dollars_per_shift, curve.tp, curve.fp, curve.tn, curve.fn)]
-    (out_dir / "cost_curve.csv").write_text("\n".join(rows) + "\n")
+    return "\n".join(rows) + "\n"
+
+
+def write_outputs(policy: Policy, curve: CostCurve, out_dir: Path = POLICY_DIR) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "policy.json").write_text(policy_json(policy))
+    (out_dir / "cost_curve.csv").write_text(curve_csv(curve))
 
 
 def main() -> int:

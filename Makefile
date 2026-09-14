@@ -1,6 +1,6 @@
 UV := uv run
 
-.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2 gate-3 gate-4 gate-5
+.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2 gate-3 gate-4 gate-5 gate-6
 
 setup:
 	uv sync
@@ -69,3 +69,7 @@ gate-5:
 	cp data/artifacts/dispositions/*.json data/artifacts/e2e/dispositions/ 2>/dev/null || true
 	ln -sfn ../../frontend/node_modules tests/e2e/node_modules
 	cd frontend && npx playwright test
+
+gate-6:
+	$(UV) pytest tests/unit -q
+	$(UV) python -m linegate.agents.policy_watcher

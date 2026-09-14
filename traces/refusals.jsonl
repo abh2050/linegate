@@ -1,0 +1,2 @@
+{"at": "2026-09-14T23:27:06+00:00", "actor": "policy_watcher", "action": "merge", "target": "local://linegate/pull/1", "reason": "agents cannot merge; a human reviews and merges policy pull requests"}
+{"at": "2026-09-14T23:27:07+00:00", "actor": "policy_watcher", "action": "merge", "target": "local://linegate/pull/1", "reason": "agents cannot merge; a human reviews and merges policy pull requests"}

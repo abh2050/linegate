@@ -1,0 +1,16 @@
+{
+  "number": 1,
+  "url": "local://linegate/pull/1",
+  "branch": "policy/memo-20260914232700",
+  "base": "274dcaaa37eada1a0762bae06863f69bc026bb80",
+  "head": "de96ed276495bd0417386cb7016e18ffc75535b3",
+  "title": "Update policy for higher field failure cost",
+  "body": "Field failure cost changed from $1850 to $2400; other memo parameters are unchanged.\n\nThis lowers the threshold from 0.027 to 0.008 and widens the abstain band to 0.007\u20130.186, increasing abstention share. Full curves are attached by the tool for review.\n\n## Parameter changes\n- `field_failure_cost_usd`: 1850.0 -> 2400.0\n\n## Old curve\nMinimum at threshold 0.027: $12,360.76/shift; abstain band [0.008, 0.258) covering 37.2% of parts.\n\n| threshold | $/shift |\n|---|---|\n| 0.005 | 17,578.50 |\n| 0.010 | 12,708.14 |\n| 0.020 | 12,487.40 |\n| 0.030 | 12,393.54 |\n| 0.050 | 12,458.00 |\n| 0.100 | 12,637.81 |\n| 0.200 | 13,200.23 |\n| 0.300 | 14,409.11 |\n| 0.500 | 15,176.73 |\n\n## New curve\nMinimum at threshold 0.008: $15,489.39/shift; abstain band [0.007, 0.186) covering 68.5% of parts.\n\n| threshold | $/shift |\n|---|---|\n| 0.005 | 17,584.70 |\n| 0.010 | 15,757.46 |\n| 0.020 | 16,069.73 |\n| 0.030 | 16,000.66 |\n| 0.050 | 16,108.51 |\n| 0.100 | 16,362.69 |\n| 0.200 | 17,104.85 |\n| 0.300 | 18,685.60 |\n| 0.500 | 19,688.73 |\n\n## Threshold delta\n-0.019 (0.027 -> 0.008); abstain band [0.008, 0.258) -> [0.007, 0.186); cost at the minimum $12,360.76 -> $15,489.39 per shift.\n",
+  "files": [
+    "config/costs.yaml",
+    "docs/policy/cost_curve.csv",
+    "docs/policy/policy.json"
+  ],
+  "state": "open",
+  "opened_at": "2026-09-14T23:27:04+00:00"
+}
