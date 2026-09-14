@@ -36,6 +36,7 @@ from linegate.model import guards, train
 from linegate.model.leak_tests import LeakLab, encode
 
 PROMPT = (ROOT / "linegate" / "agents" / "prompts" / "hypothesis.md").read_text()
+GUIDANCE_PATH = ROOT / "linegate" / "agents" / "prompts" / "search_guidance.md"
 FEATURE_VIEWS = {"parts_numeric", "parts_date", "parts_categorical"}
 EXPLORE_VIEWS = FEATURE_VIEWS | {"parts_labels"}
 RUNS_PATH = DATA_DIR / "holdout_runs.json"
@@ -334,6 +335,7 @@ def task_message(baseline: dict, reference: dict, cfg: dict) -> str:
         f"{cfg['stop_after_failed_proposals']} consecutive evaluate calls that do not clear the bar. Quarantines waste budget. "
         "Explore with run_sql first (failure rates by station, measurement, categorical value, timing), then propose and evaluate. "
         "Prefer features with a large, stable failure-rate contrast on train over tiny refinements of existing baseline aggregates."
+        + ("\n\n" + GUIDANCE_PATH.read_text() if GUIDANCE_PATH.exists() else "")
     )
 
 
