@@ -74,13 +74,22 @@ function Route({ route }) {
 }
 
 function Deviation({ m }) {
-  const width = Math.max(m.high - m.low, 1e-9);
-  const beyond = m.value > m.high ? (m.value - m.high) / width : (m.low - m.value) / width;
   const side = m.value > m.high ? 'high' : 'low';
+  const width = m.high - m.low;
+  if (width < 1e-6) {
+    return (
+      <span className={`deviation ${side}`} title="In train this measurement always took one value">
+        <span className="deviation-track"><span className="deviation-bar" style={{ width: '100%' }} /></span>
+        <span className="deviation-text mono">normally constant</span>
+      </span>
+    );
+  }
+  const beyond = side === 'high' ? (m.value - m.high) / width : (m.low - m.value) / width;
+  const shown = beyond >= 10 ? '>1000%' : `${(beyond * 100).toFixed(0)}%`;
   return (
-    <span className={`deviation ${side}`} title={`${(beyond * 100).toFixed(0)}% of the normal range beyond the ${side === 'high' ? 'upper' : 'lower'} edge`}>
+    <span className={`deviation ${side}`} title={`${shown} of the normal range beyond the ${side === 'high' ? 'upper' : 'lower'} edge`}>
       <span className="deviation-track"><span className="deviation-bar" style={{ width: `${Math.min(100, 6 + beyond * 94)}%` }} /></span>
-      <span className="deviation-text mono">{side === 'high' ? 'above' : 'below'} {(beyond * 100).toFixed(0)}%</span>
+      <span className="deviation-text mono">{side === 'high' ? 'above' : 'below'} {shown}</span>
     </span>
   );
 }
