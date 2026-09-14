@@ -1,0 +1,12 @@
+model: claude-sonnet-5
+hypothesis:
+  max_evaluate_calls: 40
+  max_usd: 8.00
+  stop_after_failed_proposals: 3
+  min_delta_mcc: 0.004
+warden:
+  id_shuffle_collapse_threshold: 0.60   # lift loss that triggers quarantine
+  strict_split_min_retention: 0.50
+disposition:
+  neighbors_k: 20
+  citation_validation: strict

@@ -1,0 +1,6 @@
+strategy: time_ordered
+key: min_timestamp_per_part
+train_fraction: 0.60
+validation_fraction: 0.20
+holdout_fraction: 0.20
+seal_path: data/holdout.lock

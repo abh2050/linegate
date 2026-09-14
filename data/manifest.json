@@ -1,0 +1,8 @@
+{
+  "test_categorical.csv.zip": "acde1b5869fb029d9b5a1e112641ec9e33599d4861e87092448ccb2369303f6c",
+  "test_date.csv.zip": "2801007419b705f18fb002aa2d7bf5a67b211b7c9f2aaeeddfaacc48986c8407",
+  "test_numeric.csv.zip": "12686d633475dcc6f4a1c408847e027f372191dbbdde49c0b67cd139dfe6aaed",
+  "train_categorical.csv.zip": "a02ef93d98fb77edf5f7e417fbfa9a15088a8e6b051ace7a3e5b2326c0dd51ce",
+  "train_date.csv.zip": "a9ebea04c935f40b2402ad9dcd354fbb39b235a6ad06e6b86924f29c715fd519",
+  "train_numeric.csv.zip": "03147ce75f9bc8c402fa4df518b1fe37c6833f30491dcc7e01c847e35b6e24b8"
+}
