@@ -9,3 +9,8 @@ data/*.zip
 data/artifacts/
 logs/
 .env
+frontend/node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+tests/e2e/node_modules

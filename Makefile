@@ -1,6 +1,6 @@
 UV := uv run
 
-.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2 gate-3 gate-4
+.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2 gate-3 gate-4 gate-5
 
 setup:
 	uv sync
@@ -57,3 +57,15 @@ gate-3:
 gate-4:
 	$(UV) pytest tests/unit -q
 	$(UV) python -m linegate.agents.hypothesis_agent
+
+# Console: build the frontend, write agent dispositions for the top of the queue,
+# then drive the real API and UI with Playwright against an isolated label store.
+gate-5:
+	$(UV) pytest tests/unit -q
+	cd frontend && npm install --no-audit --no-fund && npm run build
+	cd frontend && npx playwright install chromium
+	$(UV) python -m linegate.agents.disposition_agent 3
+	rm -rf data/artifacts/e2e && mkdir -p data/artifacts/e2e/dispositions
+	cp data/artifacts/dispositions/*.json data/artifacts/e2e/dispositions/ 2>/dev/null || true
+	ln -sfn ../../frontend/node_modules tests/e2e/node_modules
+	cd frontend && npx playwright test

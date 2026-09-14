@@ -23,3 +23,5 @@ warden:
 disposition:
   neighbors_k: 20
   citation_validation: strict
+  max_usd: 0.50                         # per part
+  max_turns: 8

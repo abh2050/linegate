@@ -20,7 +20,7 @@ import lightgbm as lgb
 import numpy as np
 import yaml
 
-from linegate.dataio import CONFIG_DIR, DATA_DIR, PARQUET_DIR
+from linegate.dataio import CONFIG_DIR, DATA_DIR, PARQUET_DIR, labels
 from linegate.dataio.duck import CATALOG_NAME
 from linegate.dataio.resources import configure, worker_threads
 from linegate.features import compute
@@ -158,6 +158,7 @@ def run(out_dir: Path = ARTIFACT_DIR) -> dict:
     with catalog_connection() as con:
         train, valid = build_matrices(con, cfg, out_dir)
     log(f"train {train.X.shape}, validation {valid.X.shape}, positives {int(train.y.sum())}/{int(valid.y.sum())}")
+    log(f"engineer-confirmed labels in the training-label store: {len(labels.load_confirmed())} (not yet merged)")
     started = time.monotonic()
     boosters = fit_ensemble(cfg, train.X, train.y, train.start, train.names, categorical=["route_code"])
     p_val = predict_ensemble(boosters, valid.X)
