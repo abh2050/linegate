@@ -99,3 +99,15 @@ def test_tool_exception_is_traced_and_the_loop_continues(tmp_path):
     assert runtime.run_agent(client, "sys", "go", tools, Budget(max_usd=1.0), trace, max_turns=5) == "recovered"
     assert "tool_error" in [e["event"] for e in events(tmp_path / "t.jsonl")]
     assert "tool failed" in client.seen[1][-1]["content"]
+
+
+def test_nudge_resumes_an_agent_that_stops_early(tmp_path):
+    turns = [Completion("I think I'm done", [], 1, 1), Completion("", [call("echo", {"text": "more"})], 1, 1),
+             Completion("done now", [], 1, 1), Completion("really done", [], 1, 1)]
+    client = ScriptedClient(turns)
+    trace = TraceWriter(tmp_path / "t.jsonl")
+    result = runtime.run_agent(client, "sys", "go", TOOLS, Budget(max_usd=1.0), trace, max_turns=10,
+                               nudge=lambda: "keep searching", max_nudges=2)
+    kinds = [e["event"] for e in events(tmp_path / "t.jsonl")]
+    assert kinds.count("nudge") == 2 and result == "really done"
+    assert client.seen[1][-1] == {"role": "user", "content": "keep searching"}

@@ -2,8 +2,9 @@
 
 Proposals run through the SQL guard and then the warden before anything else
 sees them. Evaluate adds approved features to the current best set and
-retrains the three-seed ensemble; the set grows only when validation MCC
-rises by min_delta_mcc and at least two of three seeds improve. The runtime
+retrains the three-seed ensemble; the set grows only when both validation
+MCC and average precision beat the current best by more than the noise
+measured from placebo runs (random columns added to the baseline). The runtime
 stops the search after the configured run of evaluated proposals that fail
 to clear the bar, or when evaluate calls run out. Quarantines cost budget
 but do not count toward the stop rule: they never reached the delta test.
@@ -11,6 +12,7 @@ but do not count toward the stop rule: they never reached the delta test.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -44,13 +46,14 @@ MAX_RESULT_CHARS = 30_000
 
 
 class SearchSession:
-    def __init__(self, registry, reviewer, scorer, baseline: dict, cfg: dict, trace: TraceWriter, holdout_ids: set,
+    def __init__(self, registry, reviewer, scorer, reference: dict, cfg: dict, trace: TraceWriter, holdout_ids: set,
                  dry_run=lambda sql: None):
         self.registry, self.reviewer, self.scorer, self.cfg, self.trace = registry, reviewer, scorer, cfg, trace
         self.dry_run = dry_run
         self.holdout_ids = holdout_ids
-        self.baseline_mcc = self.best_mcc = baseline["validation_mcc"]
-        self.best_per_seed = list(baseline["per_seed_validation_mcc"])
+        self.reference = reference
+        self.baseline_mcc = self.best_mcc = reference["mcc"]
+        self.best_ap = reference["ap"]
         self.accepted: list[str] = []
         self.improving: list[str] = []
         self.proposed: dict[str, str] = {}
@@ -98,23 +101,36 @@ class SearchSession:
         self.holdout_refs += result["holdout_ids_referenced"]
         return self.record_outcome([r.feature_id for r in new], [r.name for r in new], result)
 
+    def bars(self) -> tuple[float, float]:
+        k = self.cfg["noise_sd_multiplier"]
+        mcc_bar = self.best_mcc + max(self.cfg["min_delta_mcc"], k * self.reference["sd_mcc"])
+        return mcc_bar, self.best_ap + k * self.reference["sd_ap"]
+
     def record_outcome(self, fids: list[str], names: list[str], result: dict) -> dict:
-        delta = result["mcc"] - self.best_mcc
-        seeds_up = sum(a > b for a, b in zip(result["per_seed"], self.best_per_seed))
-        improved = delta >= self.cfg["min_delta_mcc"] and seeds_up >= 2
-        before = self.best_mcc
+        mcc_bar, ap_bar = self.bars()
+        improved = result["mcc"] >= mcc_bar and result["ap"] >= ap_bar
+        before = (self.best_mcc, self.best_ap)
         if improved:
             self.accepted += fids
             self.improving += fids
-            self.best_mcc, self.best_per_seed = result["mcc"], list(result["per_seed"])
+            self.best_mcc, self.best_ap = result["mcc"], result["ap"]
             self.consecutive_failures = 0
         else:
             self.consecutive_failures += 1
-        outcome = {"feature_ids": fids, "names": names, "validation_mcc": result["mcc"], "per_seed": result["per_seed"],
-                   "previous_best": before, "delta": delta, "seeds_improved": seeds_up, "improved": improved,
+        outcome = {"feature_ids": fids, "names": names, "validation_mcc": result["mcc"], "validation_ap": result["ap"],
+                   "per_seed": result["per_seed"], "previous_best_mcc": before[0], "previous_best_ap": before[1],
+                   "mcc_bar": mcc_bar, "ap_bar": ap_bar, "delta": result["mcc"] - before[0], "improved": improved,
                    "best_mcc": self.best_mcc, "holdout_ids_referenced": result["holdout_ids_referenced"]}
         self.trace.write("evaluate", **outcome)
         return outcome
+
+    def nudge(self) -> str | None:
+        if self.stop_reason() is not None:
+            return None
+        remaining = self.cfg["max_evaluate_calls"] - self.evaluations
+        return (f"The search is not finished: {remaining} evaluate calls remain and the stop rule has not triggered "
+                f"({self.consecutive_failures} of {self.cfg['stop_after_failed_proposals']} consecutive failed evaluations). "
+                "Keep exploring with run_sql, then propose and evaluate new candidates.")
 
     def stop_reason(self) -> str | None:
         if self.consecutive_failures >= self.cfg["stop_after_failed_proposals"]:
@@ -129,8 +145,8 @@ class SearchSession:
             "proposals": len(self.proposed), "approved": approved,
             "quarantined": sum(s == "quarantined" for s in self.proposed.values()),
             "survival_rate": approved / len(self.proposed) if self.proposed else 0.0,
-            "evaluations": self.evaluations, "baseline_mcc": self.baseline_mcc, "best_mcc": self.best_mcc,
-            "best_per_seed": self.best_per_seed, "accepted": self.accepted,
+            "evaluations": self.evaluations, "reference": self.reference, "baseline_mcc": self.baseline_mcc,
+            "best_mcc": self.best_mcc, "best_ap": self.best_ap, "accepted": self.accepted,
             "accepted_names": [self.registry.get(f).name for f in self.accepted],
             "improving_approved_features": self.improving, "holdout_ids_referenced": self.holdout_refs,
             "quarantined_names": [self.registry.get(f).name for f, s in self.proposed.items() if s == "quarantined"],
@@ -141,7 +157,7 @@ class SearchSession:
             Tool("propose_feature", "Register a feature (Id plus feature columns, one row per part, from parts_* views). "
                  "The warden reviews it immediately and returns its verdict.", ProposeInput, self.propose),
             Tool("evaluate", "Add approved features to the current best set and retrain the 3-seed ensemble. "
-                 "Returns validation MCC, per-seed MCC, and whether it cleared the bar.", EvaluateInput, self.evaluate),
+                 "Returns validation MCC, average precision, the bars they had to clear, and whether they did.", EvaluateInput, self.evaluate),
         ]
 
 
@@ -170,19 +186,40 @@ class EnsembleScorer:
         self.referenced = 0
         cols_tr, cols_va = self.columns(records)
         Xa, (Xb,), names, categorical = encode(cols_tr, [cols_va])
-        all_names = self.train.names + names
         try:
-            guards.check_feature_names(all_names)
+            guards.check_feature_names(self.train.names + names)
         except guards.LeakageSuspected as exc:
             raise ToolRefused(str(exc)) from exc
+        return self.score_arrays(Xa, Xb, names, categorical) | {"holdout_ids_referenced": self.referenced}
+
+    def score_arrays(self, Xa: np.ndarray, Xb: np.ndarray, names: list[str], categorical: list[str]) -> dict:
         X_train, X_valid = np.hstack([self.train.X, Xa]), np.hstack([self.valid.X, Xb])
-        boosters = train.fit_ensemble(self.cfg, X_train, self.train.y, self.train.start, all_names,
+        boosters = train.fit_ensemble(self.cfg, X_train, self.train.y, self.train.start, self.train.names + names,
                                       ["route_code"] + categorical)
         p = train.predict_ensemble(boosters, X_valid)
         per_seed = [ev.best_threshold(ev.confusion_sweep(self.valid.y, b.predict(X_valid, num_iteration=b.best_iteration)))[1]
                     for b in boosters]
-        return {"mcc": ev.best_threshold(ev.confusion_sweep(self.valid.y, p))[1], "per_seed": per_seed,
-                "holdout_ids_referenced": self.referenced}
+        return {"mcc": ev.best_threshold(ev.confusion_sweep(self.valid.y, p))[1], "ap": ev.average_precision(self.valid.y, p),
+                "per_seed": per_seed}
+
+    def calibrate(self, placebo_runs: int, cache: Path) -> dict:
+        """Reference MCC/AP and their spread over the baseline plus random-column placebo runs."""
+        key = hashlib.sha256(json.dumps([self.cfg, self.train.names, placebo_runs], sort_keys=True).encode()).hexdigest()
+        if cache.exists() and json.loads(cache.read_text()).get("key") == key:
+            return json.loads(cache.read_text())
+        empty = np.empty((len(self.train.y), 0), np.float32), np.empty((len(self.valid.y), 0), np.float32)
+        runs = [self.score_arrays(*empty, [], [])]
+        for d in range(placebo_runs):
+            rng = np.random.default_rng(100 + d)
+            cols = [f"placebo_{i}" for i in range(d + 1)]
+            runs.append(self.score_arrays(rng.random((len(self.train.y), d + 1), dtype=np.float32),
+                                          rng.random((len(self.valid.y), d + 1), dtype=np.float32), cols, []))
+        mcc, ap = np.array([r["mcc"] for r in runs]), np.array([r["ap"] for r in runs])
+        ref = {"key": key, "mcc": float(mcc.mean()), "ap": float(ap.mean()), "sd_mcc": float(mcc.std(ddof=1)),
+               "sd_ap": float(ap.std(ddof=1)), "runs": runs}
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(json.dumps(ref, indent=2) + "\n")
+        return ref
 
 
 def cell(value) -> object:
@@ -279,10 +316,11 @@ def gate_problems(summary: dict, trace_complete: bool, holdout_runs_unchanged: b
     return problems
 
 
-def task_message(baseline: dict, cfg: dict) -> str:
+def task_message(baseline: dict, reference: dict, cfg: dict) -> str:
     return (
-        f"Baseline ({baseline['feature_set']}, {baseline['feature_count']} features): validation MCC "
-        f"{baseline['validation_mcc']:.4f}, per seed {[round(m, 4) for m in baseline['per_seed_validation_mcc']]}. "
+        f"Baseline ({baseline['feature_set']}, {baseline['feature_count']} features): reference validation MCC "
+        f"{reference['mcc']:.4f} and average precision {reference['ap']:.4f}, averaged over the baseline and "
+        f"{cfg['placebo_runs']} placebo runs (MCC noise SD {reference['sd_mcc']:.4f}, AP noise SD {reference['sd_ap']:.4f}). "
         "It already has per-station numeric min/max/range and missing counts, per-station dwell and arrival offset, "
         "per-line span and arrival, total elapsed time, station count, route code, integer codes of 96 categorical "
         "columns, and per-station categorical counts.\n"
@@ -290,8 +328,9 @@ def task_message(baseline: dict, cfg: dict) -> str:
         "one or more feature columns, exactly one row per part. No window functions, no labels, no Id arithmetic. "
         "Date columns are relative time; categorical values look like 'T1' and can be parsed with try_cast(substr(x, 2) AS BIGINT). "
         "Useful: least(*COLUMNS('^L3_S32_D')) style unpacking.\n"
-        f"A feature batch is accepted when validation MCC rises by at least {cfg['min_delta_mcc']} over the current best "
-        f"and at least 2 of 3 seeds improve. You have {cfg['max_evaluate_calls']} evaluate calls. The search ends after "
+        f"A feature batch is accepted when validation MCC beats the current best by more than "
+        f"max({cfg['min_delta_mcc']}, {cfg['noise_sd_multiplier']} x MCC SD) and average precision beats it by more than "
+        f"{cfg['noise_sd_multiplier']} x AP SD. Small effects are indistinguishable from noise; look for strong signals. You have {cfg['max_evaluate_calls']} evaluate calls. The search ends after "
         f"{cfg['stop_after_failed_proposals']} consecutive evaluate calls that do not clear the bar. Quarantines waste budget. "
         "Explore with run_sql first (failure rates by station, measurement, categorical value, timing), then propose and evaluate. "
         "Prefer features with a large, stable failure-rate contrast on train over tiny refinements of existing baseline aggregates."
@@ -305,33 +344,39 @@ def holdout_id_array(parquet_dir: Path = PARQUET_DIR) -> np.ndarray:
 
 def trace_is_complete(path: Path) -> bool:
     events = [json.loads(line)["event"] for line in path.read_text().splitlines()] if path.exists() else []
-    return bool(events) and events[0] == "agent_start" and "search_summary" in events \
+    return "agent_start" in events and "search_summary" in events \
         and any(e in ("agent_end", "budget_stop") for e in events)
 
 
-def main() -> int:
-    agents = yaml.safe_load((CONFIG_DIR / "agents.yaml").read_text())
+def build_search(agents: dict, holdout: np.ndarray, trace: TraceWriter, warden_trace: Path):
     hyp, wcfg = agents["hypothesis"], agents["warden"]
-    runs_before = RUNS_PATH.read_bytes()
-    holdout = holdout_id_array()
     baseline = json.loads((train.ARTIFACT_DIR / "metrics.json").read_text())
     pricing = (agents["usd_per_million_input_tokens"], agents["usd_per_million_output_tokens"])
     registry, lab, client = FeatureRegistry(), LeakLab(wcfg), OpenAIClient(agents["model"])
-    trace_path, warden_trace = new_trace_path("hypothesis"), new_trace_path("warden-search")
-    trace = TraceWriter(trace_path)
     explore = ExploreTools(set(holdout.tolist()), baseline)
+
     def reviewer(fid: str):
         decision = review_feature(fid, registry, client, wcfg, warden_trace, lab, pricing)
         lab.evict(registry.get(fid).sql, keep_plain=decision.final == "approved")
         return decision
 
-    session = SearchSession(registry, reviewer,
-                            EnsembleScorer(train.load_model_config(), lab, holdout), baseline, hyp, trace, set(holdout.tolist()),
-                            dry_run=explore.dry_run)
+    scorer = EnsembleScorer(train.load_model_config(), lab, holdout)
+    reference = scorer.calibrate(hyp["placebo_runs"], SEARCH_DIR / "noise_reference.json")
+    trace.write("noise_reference", **{k: v for k, v in reference.items() if k != "runs"})
+    session = SearchSession(registry, reviewer, scorer, reference, hyp, trace, set(holdout.tolist()), dry_run=explore.dry_run)
     budget = Budget(max_usd=hyp["max_usd"], usd_per_mtok_in=pricing[0], usd_per_mtok_out=pricing[1],
                     max_calls={"evaluate": hyp["max_evaluate_calls"]})
-    tools = explore.tools() + session.tools()
-    run_agent(client, PROMPT, task_message(baseline, hyp), tools, budget, trace, MAX_TURNS, session.stop_reason)
+    return client, session, explore.tools() + session.tools(), budget, task_message(baseline, reference, hyp)
+
+
+def main() -> int:
+    agents = yaml.safe_load((CONFIG_DIR / "agents.yaml").read_text())
+    runs_before, holdout = RUNS_PATH.read_bytes(), holdout_id_array()
+    trace_path, warden_trace = new_trace_path("hypothesis"), new_trace_path("warden-search")
+    trace = TraceWriter(trace_path)
+    client, session, tools, budget, task = build_search(agents, holdout, trace, warden_trace)
+    run_agent(client, PROMPT, task, tools, budget, trace, MAX_TURNS, session.stop_reason,
+              nudge=session.nudge, max_nudges=agents["hypothesis"]["max_nudges"])
     summary = session.summary() | {"agent_spend_usd": round(budget.spent_usd, 4), "trace": str(trace_path),
                                    "warden_trace": str(warden_trace)}
     trace.write("search_summary", **summary)

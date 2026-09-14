@@ -6,7 +6,10 @@ hypothesis:
   max_evaluate_calls: 40
   max_usd: 8.00
   stop_after_failed_proposals: 3
-  min_delta_mcc: 0.004
+  min_delta_mcc: 0.004                  # floor; the measured noise bar usually dominates (ADR-0006)
+  placebo_runs: 4                       # random-column controls that measure evaluate noise
+  noise_sd_multiplier: 2.0              # acceptance needs MCC and AP gains beyond this many placebo SDs
+  max_nudges: 5                         # times the runtime asks an agent that stops early to continue
 warden:
   id_shuffle_collapse_threshold: 0.60   # lift loss that triggers quarantine
   strict_split_min_retention: 0.50

@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from linegate.model import evaluate
 
@@ -49,3 +50,11 @@ def test_bootstrap_interval_brackets_point_estimate():
     lo, hi = evaluate.bootstrap_mcc(y, p, threshold=0.5, draws=200)
     point = evaluate.confusion_sweep(y, p, np.array([0.5])).mcc[0]
     assert lo < point < hi
+
+
+def test_average_precision_matches_definition():
+    y = np.array([1, 0, 1, 0, 0, 1])
+    p = np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.1])
+    # positives at ranks 1, 3, 6 -> precisions 1/1, 2/3, 3/6
+    assert evaluate.average_precision(y, p) == pytest.approx((1 + 2 / 3 + 0.5) / 3)
+    assert evaluate.average_precision(np.zeros(3), np.array([0.1, 0.2, 0.3])) == 0.0

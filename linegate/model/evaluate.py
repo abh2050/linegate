@@ -71,3 +71,13 @@ def bootstrap_mcc(y: np.ndarray, p: np.ndarray, threshold: float, draws: int = 5
         scores.append(mcc_from_counts((pp & yy).sum(), (pp & ~yy).sum(), (~pp & ~yy).sum(), (~pp & yy).sum()))
     lo, hi = np.percentile(scores, [5, 95])
     return float(lo), float(hi)
+
+
+def average_precision(y: np.ndarray, p: np.ndarray) -> float:
+    """Mean precision at the rank of each positive, scores sorted descending (ties broken by order)."""
+    order = np.argsort(-np.asarray(p), kind="mergesort")
+    hits = np.asarray(y)[order] == 1
+    if not hits.any():
+        return 0.0
+    ranks = np.flatnonzero(hits) + 1
+    return float((np.arange(1, len(ranks) + 1) / ranks).mean())

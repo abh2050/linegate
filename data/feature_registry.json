@@ -55,5 +55,53 @@
     "proposed_by": "hypothesis_agent",
     "status": "proposed",
     "findings": []
+  },
+  "f_52b53e1488": {
+    "feature_id": "f_52b53e1488",
+    "name": "l3_s29_missing_ct",
+    "hypothesis": "A late station with intermittent sensor blindness should show more missing readings on failed parts, especially when the part is misaligned or partially occluded at that inspection point.",
+    "sql": "SELECT Id,\n       (CASE WHEN D.L3_S29_D3316 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3319 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3322 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3325 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3328 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3331 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3334 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3337 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3340 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3343 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3346 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3349 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3352 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3355 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3358 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3361 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3363 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3365 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3368 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3371 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3374 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3377 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3380 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3383 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3386 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3389 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3391 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3393 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3396 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3399 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3402 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3405 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3408 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3410 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3413 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3415 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3417 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3419 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3422 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3425 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3428 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3431 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3434 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3437 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3440 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3443 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3445 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3447 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3450 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3453 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3456 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3459 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3462 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3465 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3468 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3471 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3474 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3477 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3480 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3483 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3486 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3489 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3492 IS NULL THEN 1 ELSE 0 END) AS l3_s29_missing_ct\nFROM parts_date D",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id shuffle collapse 0.0 (< 0.6), strict time refit retention 1.0 (>= 0.5), and row scope mismatch share 0.0; the feature is stable under all three required tests. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0011 -> 0.0011 (collapse 0%); strict time refit: retention 100% (time lift 0.0011, random lift 0.0137)",
+        "at": "2026-09-14T22:37:29+00:00"
+      }
+    ]
+  },
+  "f_8655c876c6": {
+    "feature_id": "f_8655c876c6",
+    "name": "l3_s29_problem_trio",
+    "hypothesis": "A specific inspection submodule may be failing as a cluster of three adjacent sensors, which would create a discrete pattern: either all present or the same trio missing together on defective parts.",
+    "sql": "SELECT Id,\n       (CASE WHEN D.L3_S29_D3474 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3477 IS NULL THEN 1 ELSE 0 END\n      + CASE WHEN D.L3_S29_D3480 IS NULL THEN 1 ELSE 0 END) AS l3_s29_problem_trio\nFROM parts_date D",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id_shuffle_test collapse=0.0 (<0.6), strict_time_refit retention=1.0 (>=0.5), and row_scope_check mismatch_share=0.0. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0011 -> 0.0011 (collapse 0%); strict time refit: retention 100% (time lift 0.0011, random lift 0.0138)",
+        "at": "2026-09-14T22:37:36+00:00"
+      }
+    ]
+  },
+  "f_5220a95d69": {
+    "feature_id": "f_5220a95d69",
+    "name": "l3_s29_dwell",
+    "hypothesis": "If the line backs up before S29, longer waiting time can let parts cool, drift, or pick up handling damage that only shows up at the late inspection station.",
+    "sql": "SELECT Id,\n       D.L3_S29_D3492 AS l3_s29_dwell\nFROM parts_date D",
+    "proposed_by": "hypothesis_agent",
+    "status": "quarantined",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "quarantined",
+        "finding": "Quarantine: strict time refit retention was 0.0 (< 0.5), and the id shuffle test showed collapse 0.0. The row scope check had 0 mismatched of 355038 (mismatch_share 0.0), but the strict time refit result fails the live-line rule. | Evidence: strict time refit: kept 0% of random-split lift (< 50%)",
+        "at": "2026-09-14T22:37:45+00:00"
+      }
+    ]
   }
 }

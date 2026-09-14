@@ -139,7 +139,8 @@ def dispatch(call: ToolCall, tools: dict[str, Tool], budget: Budget, trace: Trac
 
 
 def run_agent(client: LLMClient, system: str, task: str, tools: list[Tool], budget: Budget,
-              trace: TraceWriter, max_turns: int, should_stop: Callable[[], str | None] = lambda: None) -> str:
+              trace: TraceWriter, max_turns: int, should_stop: Callable[[], str | None] = lambda: None,
+              nudge: Callable[[], str | None] = lambda: None, max_nudges: int = 0) -> str:
     registry = {t.name: t for t in tools}
     specs = [t.spec() for t in tools]
     messages = [{"role": "system", "content": system}, {"role": "user", "content": task}]
@@ -151,8 +152,14 @@ def run_agent(client: LLMClient, system: str, task: str, tools: list[Tool], budg
                     tool_calls=[{"name": c.name, "arguments": c.arguments} for c in completion.tool_calls])
         messages.append(assistant_message(completion))
         if not completion.tool_calls:
-            trace.write("agent_end", reason="no tool calls", text=completion.text)
-            return completion.text
+            message = nudge() if max_nudges > 0 else None
+            if message is None:
+                trace.write("agent_end", reason="no tool calls", text=completion.text)
+                return completion.text
+            max_nudges -= 1
+            trace.write("nudge", message=message)
+            messages.append({"role": "user", "content": message})
+            continue
         for call in completion.tool_calls:
             content = json.dumps(dispatch(call, registry, budget, trace), default=str)
             messages.append({"role": "tool", "tool_call_id": call.id, "content": content})
