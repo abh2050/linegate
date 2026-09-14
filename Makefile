@@ -1,6 +1,6 @@
 UV := uv run
 
-.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status
+.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2
 
 setup:
 	uv sync
@@ -45,3 +45,7 @@ gate-1-status:
 	@if [ -f logs/gate-1.exit ]; then echo "finished, exit $$(cat logs/gate-1.exit)"; else echo "running"; fi
 	@grep -v VIRTUAL_ENV logs/gate-1.log | tail -15
 	@if [ -f data/artifacts/baseline/metrics.json ]; then head -20 data/artifacts/baseline/metrics.json; fi
+
+gate-2:
+	$(UV) pytest tests/unit -q
+	$(UV) python -m linegate.cost.policy
