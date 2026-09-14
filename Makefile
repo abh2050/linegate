@@ -1,6 +1,6 @@
 UV := uv run
 
-.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2 gate-3 gate-4 gate-5 gate-6
+.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2 gate-3 gate-4 gate-5 gate-6 gate-7
 
 setup:
 	uv sync
@@ -73,3 +73,8 @@ gate-5:
 gate-6:
 	$(UV) pytest tests/unit -q
 	$(UV) python -m linegate.agents.policy_watcher
+
+# Runs the holdout exactly once (rehearsed on validation first), then writes docs/scorecard.md.
+gate-7:
+	$(UV) pytest tests/unit -q
+	$(UV) python -m linegate.reporting.scorecard
