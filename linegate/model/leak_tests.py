@@ -102,6 +102,11 @@ class LeakLab:
                 self._frames[key] = sandbox.compute_feature(sb, sql)
         return self._frames[key]
 
+    def evict(self, sql: str, keep_plain: bool) -> None:
+        """Drop cached frames for a reviewed feature; keep plain frames only if they will be evaluated."""
+        for key in [k for k in self._frames if k[0] == sql and not (keep_plain and k[2] == "plain")]:
+            del self._frames[key]
+
     def labels_for(self, frame: sandbox.FeatureFrame, split: str) -> np.ndarray:
         ids, y = self._labels[split]
         return y[np.searchsorted(ids, frame.ids)]

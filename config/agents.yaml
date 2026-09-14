@@ -10,7 +10,7 @@ hypothesis:
 warden:
   id_shuffle_collapse_threshold: 0.60   # lift loss that triggers quarantine
   strict_split_min_retention: 0.50
-  min_lift: 0.005                       # below this, collapse and retention are not meaningful
+  min_lift: 0.02                        # ~2 standard errors of AUC at ~1,000 positives; below this, collapse and retention are noise
   row_scope_sample_fraction: 0.5
   max_usd: 1.00                         # per feature review
   max_turns: 8

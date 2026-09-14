@@ -64,3 +64,12 @@ def test_verdict_names_every_failed_test():
                                RefitResult(time_lift=0.15, random_lift=0.2, retention=0.75),
                                ScopeResult(rows_compared=100, mismatched=0, mismatch_share=0.0), CFG)
     assert ok[0] == "approve" and ok[1]
+
+
+def test_evict_keeps_only_plain_frames_of_approved_features(lab):
+    sql = "SELECT Id, L0_S0_F0 + 1 AS x FROM parts_numeric"
+    lab.row_scope_check(sql)
+    lab.evict(sql, keep_plain=True)
+    assert {k[2] for k in lab._frames if k[0] == sql} == {"plain"}
+    lab.evict(sql, keep_plain=False)
+    assert not [k for k in lab._frames if k[0] == sql]

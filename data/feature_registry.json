@@ -1,0 +1,50 @@
+{
+  "f_cee31d9391": {
+    "feature_id": "f_cee31d9391",
+    "name": "l3_s30_spread",
+    "hypothesis": "A station with multiple sub-operations can leave a part with one measurement far from the others when a fixture or tool drifts, so the within-station numeric spread should widen on bad parts.",
+    "sql": "SELECT Id,\n       CASE WHEN L3_S30_F3494 IS NULL OR L3_S30_F3499 IS NULL OR L3_S30_F3504 IS NULL OR L3_S30_F3509 IS NULL OR L3_S30_F3514 IS NULL OR L3_S30_F3519 IS NULL OR L3_S30_F3524 IS NULL OR L3_S30_F3529 IS NULL\n            THEN NULL\n            ELSE greatest(L3_S30_F3494, L3_S30_F3499, L3_S30_F3504, L3_S30_F3509, L3_S30_F3514, L3_S30_F3519, L3_S30_F3524, L3_S30_F3529) -\n                 least(L3_S30_F3494, L3_S30_F3499, L3_S30_F3504, L3_S30_F3509, L3_S30_F3514, L3_S30_F3519, L3_S30_F3524, L3_S30_F3529)\n       END AS l3_s30_spread\nFROM parts_numeric",
+    "proposed_by": "hypothesis_agent",
+    "status": "quarantined",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "quarantined",
+        "finding": "Quarantine: strict_time_refit retention was 0.0, below the 0.5 threshold, and id_shuffle_test also showed collapse 0.0 with no lift to preserve; row_scope_check had 0 mismatches, but the time refit result fails the rule. | Evidence: strict time refit: kept 0% of random-split lift (< 50%)",
+        "at": "2026-09-14T22:30:31+00:00"
+      }
+    ]
+  },
+  "f_2917323b0f": {
+    "feature_id": "f_2917323b0f",
+    "name": "l3_s29_spread",
+    "hypothesis": "A station with multiple sub-operations can leave a part with one measurement far from the others when a fixture or tool drifts, so the within-station numeric spread should widen on bad parts.",
+    "sql": "SELECT Id,\n       CASE WHEN L3_S29_F3315 IS NULL OR L3_S29_F3318 IS NULL OR L3_S29_F3321 IS NULL OR L3_S29_F3324 IS NULL OR L3_S29_F3327 IS NULL OR L3_S29_F3330 IS NULL OR L3_S29_F3333 IS NULL OR L3_S29_F3336 IS NULL\n            THEN NULL\n            ELSE greatest(L3_S29_F3315, L3_S29_F3318, L3_S29_F3321, L3_S29_F3324, L3_S29_F3327, L3_S29_F3330, L3_S29_F3333, L3_S29_F3336) -\n                 least(L3_S29_F3315, L3_S29_F3318, L3_S29_F3321, L3_S29_F3324, L3_S29_F3327, L3_S29_F3330, L3_S29_F3333, L3_S29_F3336)\n       END AS l3_s29_spread\nFROM parts_numeric",
+    "proposed_by": "hypothesis_agent",
+    "status": "quarantined",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "quarantined",
+        "finding": "Quarantine: strict time refit retention is 0.0 (time_lift 0.0 vs random_lift 0.04135480674801251), which is below the 0.5 threshold. Id shuffle collapse is 0.0 and row scope mismatch share is 0.0, but the strict time refit result shows no temporal retention. | Evidence: strict time refit: kept 0% of random-split lift (< 50%)",
+        "at": "2026-09-14T22:30:43+00:00"
+      }
+    ]
+  },
+  "f_883bbeed75": {
+    "feature_id": "f_883bbeed75",
+    "name": "l3_s35_normspread",
+    "hypothesis": "A station with several parallel gauges can show failure when one gauge departs from the others; normalizing the spread by the number of observed gauges helps distinguish a real process upset from a generally sparse readout.",
+    "sql": "SELECT Id,\n       CASE WHEN (CASE WHEN L3_S35_F3884 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3889 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3894 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3896 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3898 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3903 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3908 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3913 IS NOT NULL THEN 1 ELSE 0 END) = 0\n            THEN NULL\n            ELSE (greatest(L3_S35_F3884, L3_S35_F3889, L3_S35_F3894, L3_S35_F3896, L3_S35_F3898, L3_S35_F3903, L3_S35_F3908, L3_S35_F3913) -\n                  least(L3_S35_F3884, L3_S35_F3889, L3_S35_F3894, L3_S35_F3896, L3_S35_F3898, L3_S35_F3903, L3_S35_F3908, L3_S35_F3913)) /\n                 (CASE WHEN L3_S35_F3884 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3889 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3894 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3896 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3898 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3903 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3908 IS NOT NULL THEN 1 ELSE 0 END +\n                  CASE WHEN L3_S35_F3913 IS NOT NULL THEN 1 ELSE 0 END)\n       END AS l3_s35_normspread\nFROM parts_numeric",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id_shuffle_test collapse=0.0, strict_time_refit retention=1.0, and row_scope_check mismatched=0/355038 (0.0); no quarantine rule was triggered. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0026 -> 0.0026 (collapse 0%); strict time refit: retention 100% (time lift 0.0026, random lift 0.0000)",
+        "at": "2026-09-14T22:30:56+00:00"
+      }
+    ]
+  }
+}

@@ -71,3 +71,19 @@ def test_per_tool_call_cap(tmp_path):
     runtime.run_agent(ScriptedClient(turns), "sys", "go", TOOLS, budget, trace, max_turns=10)
     kinds = [e["event"] for e in events(tmp_path / "t.jsonl")]
     assert kinds.count("tool_result") == 2 and kinds.count("tool_refused") == 1
+
+
+def test_stop_hook_ends_the_loop(tmp_path):
+    turns = [Completion("", [call("echo", {"text": str(i)}, f"c{i}")], 1, 1) for i in range(5)]
+    state = {"n": 0}
+
+    def echo(a):
+        state["n"] += 1
+        return {"echo": a.text}
+
+    tools = [Tool("echo", "echo", EchoInput, echo)]
+    trace = TraceWriter(tmp_path / "t.jsonl")
+    runtime.run_agent(ScriptedClient(turns), "sys", "go", tools, Budget(max_usd=1.0), trace, max_turns=5,
+                      should_stop=lambda: "enough" if state["n"] >= 2 else None)
+    kinds = [e["event"] for e in events(tmp_path / "t.jsonl")]
+    assert state["n"] == 2 and kinds[-1] == "agent_end"

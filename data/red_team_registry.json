@@ -10,8 +10,8 @@
       {
         "actor": "warden",
         "status": "quarantined",
-        "finding": "Quarantine: row scope check failed with mismatch_share 0.5007745649761434 (> 0), even though Id shuffle collapse was 0.37277246386387314 and strict time refit retention was 1.0716584460230711. | Evidence: row scope: 50.1% of 355,038 part values changed when other parts were removed",
-        "at": "2026-09-14T22:15:11+00:00"
+        "finding": "Quarantine: row scope check failed with mismatch_share=0.5007745649761434 (>0), and the Id shuffle test showed collapse=0.37277246386387314 (<0.6 threshold) while strict time refit retention=1.0716584460230711. | Evidence: row scope: 50.1% of 355,038 part values changed when other parts were removed",
+        "at": "2026-09-14T22:32:58+00:00"
       }
     ]
   },
@@ -26,8 +26,8 @@
       {
         "actor": "warden",
         "status": "quarantined",
-        "finding": "Quarantine: id_shuffle_test collapse=0.9953, which exceeds the 0.6 threshold and shows the lift vanishes under randomized Id ordering; row_scope_check mismatch_share=0.5008 also indicates a row-scope mismatch. | Evidence: row scope: 50.1% of 355,038 part values changed when other parts were removed; Id shuffle: lift fell from 0.2056 to 0.0010 (collapse 100% >= 60%)",
-        "at": "2026-09-14T22:15:26+00:00"
+        "finding": "Quarantine: Id shuffle collapse = 0.9952715143540806 (>= 0.6), and row scope mismatch = 0.5007773815760567 (> 0). Strict time refit retention = 1.1394282322859144, but the collapse and row-scope failure are disqualifying. | Evidence: row scope: 50.1% of 355,038 part values changed when other parts were removed; Id shuffle: lift fell from 0.2056 to 0.0010 (collapse 100% >= 60%)",
+        "at": "2026-09-14T22:33:15+00:00"
       }
     ]
   },
@@ -42,8 +42,8 @@
       {
         "actor": "warden",
         "status": "approved",
-        "finding": "Approved: id_shuffle_test showed collapse 0.0, strict_time_refit showed retention 0.8440278551693311, and row_scope_check showed mismatch_share 0.0 (0 of 355038 rows). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.1123 -> 0.1123 (collapse 0%); strict time refit: retention 84% (time lift 0.1123, random lift 0.1331)",
-        "at": "2026-09-14T22:15:44+00:00"
+        "finding": "Approved: row scope check found 0 mismatches out of 355,038 rows (mismatch_share 0.0); Id shuffle test showed 0.0 collapse (lift 0.1123 vs shuffled_lift 0.1123); strict time refit retention was 0.8440, above the 0.5 quarantine threshold. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.1123 -> 0.1123 (collapse 0%); strict time refit: retention 84% (time lift 0.1123, random lift 0.1331)",
+        "at": "2026-09-14T22:33:34+00:00"
       }
     ]
   },
@@ -58,8 +58,8 @@
       {
         "actor": "warden",
         "status": "approved",
-        "finding": "Approved: id_shuffle_test collapse=0.0 (<0.6), strict_time_refit retention=0.7161 (>=0.5), row_scope_check mismatch_share=0.0 (no row-scope mismatch). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.1004 -> 0.1004 (collapse 0%); strict time refit: retention 72% (time lift 0.1004, random lift 0.1402)",
-        "at": "2026-09-14T22:16:06+00:00"
+        "finding": "Approved: id_shuffle_test collapse 0.0 (< 0.6), strict_time_refit retention 0.7161 (>= 0.5), and row_scope_check mismatch_share 0.0 (no row scope mismatch). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.1004 -> 0.1004 (collapse 0%); strict time refit: retention 72% (time lift 0.1004, random lift 0.1402)",
+        "at": "2026-09-14T22:33:57+00:00"
       }
     ]
   },
@@ -74,8 +74,8 @@
       {
         "actor": "warden",
         "status": "approved",
-        "finding": "Approved: Id shuffle test collapse=0.0 (lift 0.1137, shuffled_lift 0.1137); strict time refit retention=0.7421 (time_lift 0.1137, random_lift 0.1532); row scope check mismatch_share=0.0 (0/355038). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.1137 -> 0.1137 (collapse 0%); strict time refit: retention 74% (time lift 0.1137, random lift 0.1532)",
-        "at": "2026-09-14T22:16:29+00:00"
+        "finding": "Approved: id_shuffle_test collapse=0.0 (< 0.6), strict_time_refit retention=0.7421227041252815 (>= 0.5), and row_scope_check mismatch_share=0.0 with 0/355038 mismatched rows. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.1137 -> 0.1137 (collapse 0%); strict time refit: retention 74% (time lift 0.1137, random lift 0.1532)",
+        "at": "2026-09-14T22:34:22+00:00"
       }
     ]
   }

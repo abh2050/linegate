@@ -136,7 +136,7 @@ def dispatch(call: ToolCall, tools: dict[str, Tool], budget: Budget, trace: Trac
 
 
 def run_agent(client: LLMClient, system: str, task: str, tools: list[Tool], budget: Budget,
-              trace: TraceWriter, max_turns: int) -> str:
+              trace: TraceWriter, max_turns: int, should_stop: Callable[[], str | None] = lambda: None) -> str:
     registry = {t.name: t for t in tools}
     specs = [t.spec() for t in tools]
     messages = [{"role": "system", "content": system}, {"role": "user", "content": task}]
@@ -155,6 +155,9 @@ def run_agent(client: LLMClient, system: str, task: str, tools: list[Tool], budg
             messages.append({"role": "tool", "tool_call_id": call.id, "content": content})
         if budget.exhausted:
             trace.write("budget_stop", spent_usd=budget.spent_usd, max_usd=budget.max_usd)
+            return ""
+        if (reason := should_stop()) is not None:
+            trace.write("agent_end", reason=reason)
             return ""
     trace.write("agent_end", reason="max turns")
     return ""
