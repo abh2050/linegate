@@ -279,5 +279,69 @@
         "at": "2026-09-14T23:05:42+00:00"
       }
     ]
+  },
+  "f_98362c0459": {
+    "feature_id": "f_98362c0459",
+    "name": "same_line_transition_gaps",
+    "hypothesis": "Queueing or transport delay between consecutive same-line stations can expose parts to cooling, contamination, or rescheduling; explicit inter-station gaps may catch this line state better than per-station dwell and arrival offsets.",
+    "sql": "SELECT\n  d.Id,\n  least(d.L1_S25_D1854,d.L1_S25_D1857,d.L1_S25_D1860,d.L1_S25_D1862,d.L1_S25_D1864,d.L1_S25_D1867,d.L1_S25_D1871,d.L1_S25_D1875,d.L1_S25_D1879,d.L1_S25_D1883,d.L1_S25_D1887,d.L1_S25_D1891,d.L1_S25_D1893,d.L1_S25_D1895,d.L1_S25_D1898,d.L1_S25_D1902,d.L1_S25_D1906,d.L1_S25_D1911,d.L1_S25_D1916,d.L1_S25_D1921,d.L1_S25_D1926,d.L1_S25_D1931,d.L1_S25_D1935,d.L1_S25_D1940,d.L1_S25_D1945,d.L1_S25_D1950,d.L1_S25_D1955,d.L1_S25_D1960,d.L1_S25_D1965,d.L1_S25_D1970,d.L1_S25_D1975,d.L1_S25_D1980,d.L1_S25_D1984,d.L1_S25_D1989,d.L1_S25_D1994,d.L1_S25_D1999,d.L1_S25_D2004,d.L1_S25_D2009,d.L1_S25_D2013,d.L1_S25_D2018,d.L1_S25_D2023,d.L1_S25_D2028,d.L1_S25_D2033,d.L1_S25_D2038,d.L1_S25_D2043,d.L1_S25_D2048,d.L1_S25_D2053,d.L1_S25_D2058,d.L1_S25_D2063,d.L1_S25_D2068,d.L1_S25_D2073,d.L1_S25_D2078,d.L1_S25_D2083,d.L1_S25_D2088,d.L1_S25_D2093,d.L1_S25_D2098,d.L1_S25_D2103,d.L1_S25_D2108,d.L1_S25_D2113,d.L1_S25_D2118,d.L1_S25_D2123,d.L1_S25_D2128,d.L1_S25_D2133,d.L1_S25_D2138,d.L1_S25_D2140,d.L1_S25_D2143,d.L1_S25_D2146,d.L1_S25_D2149,d.L1_S25_D2151,d.L1_S25_D2154,d.L1_S25_D2157,d.L1_S25_D2160,d.L1_S25_D2163,d.L1_S25_D2166,d.L1_S25_D2169,d.L1_S25_D2172,d.L1_S25_D2175,d.L1_S25_D2178,d.L1_S25_D2180,d.L1_S25_D2183,d.L1_S25_D2186,d.L1_S25_D2189,d.L1_S25_D2192,d.L1_S25_D2195,d.L1_S25_D2198,d.L1_S25_D2201,d.L1_S25_D2204,d.L1_S25_D2206,d.L1_S25_D2209,d.L1_S25_D2212,d.L1_S25_D2214,d.L1_S25_D2216,d.L1_S25_D2219,d.L1_S25_D2222,d.L1_S25_D2225,d.L1_S25_D2228,d.L1_S25_D2230,d.L1_S25_D2232,d.L1_S25_D2234,d.L1_S25_D2235,d.L1_S25_D2236,d.L1_S25_D2238,d.L1_S25_D2240,d.L1_S25_D2242,d.L1_S25_D2244,d.L1_S25_D2246,d.L1_S25_D2248,d.L1_S25_D2251,d.L1_S25_D2255,d.L1_S25_D2260,d.L1_S25_D2265,d.L1_S25_D2270,d.L1_S25_D2275,d.L1_S25_D2280,d.L1_S25_D2284,d.L1_S25_D2289,d.L1_S25_D2294,d.L1_S25_D2299,d.L1_S25_D2304,d.L1_S25_D2309,d.L1_S25_D2314,d.L1_S25_D2319,d.L1_S25_D2324,d.L1_S25_D2329,d.L1_S25_D2333,d.L1_S25_D2338,d.L1_S25_D2343,d.L1_S25_D2348,d.L1_S25_D2353,d.L1_S25_D2358,d.L1_S25_D2362,d.L1_S25_D2367,d.L1_S25_D2372,d.L1_S25_D2377,d.L1_S25_D2382,d.L1_S25_D2387,d.L1_S25_D2392,d.L1_S25_D2397,d.L1_S25_D2402,d.L1_S25_D2406,d.L1_S25_D2409,d.L1_S25_D2412,d.L1_S25_D2415,d.L1_S25_D2418,d.L1_S25_D2421,d.L1_S25_D2424,d.L1_S25_D2427,d.L1_S25_D2430,d.L1_S25_D2432,d.L1_S25_D2434,d.L1_S25_D2436,d.L1_S25_D2438,d.L1_S25_D2440,d.L1_S25_D2442,d.L1_S25_D2444,d.L1_S25_D2445,d.L1_S25_D2446,d.L1_S25_D2448,d.L1_S25_D2450,d.L1_S25_D2452,d.L1_S25_D2453,d.L1_S25_D2455,d.L1_S25_D2457,d.L1_S25_D2459,d.L1_S25_D2461,d.L1_S25_D2463,d.L1_S25_D2465,d.L1_S25_D2467,d.L1_S25_D2469,d.L1_S25_D2471,d.L1_S25_D2474,d.L1_S25_D2477,d.L1_S25_D2480,d.L1_S25_D2483,d.L1_S25_D2486,d.L1_S25_D2489,d.L1_S25_D2492,d.L1_S25_D2495,d.L1_S25_D2497,d.L1_S25_D2499,d.L1_S25_D2501,d.L1_S25_D2502,d.L1_S25_D2503,d.L1_S25_D2505,d.L1_S25_D2507,d.L1_S25_D2509,d.L1_S25_D2511,d.L1_S25_D2513,d.L1_S25_D2515,d.L1_S25_D2518,d.L1_S25_D2522,d.L1_S25_D2527,d.L1_S25_D2532,d.L1_S25_D2537,d.L1_S25_D2542,d.L1_S25_D2547,d.L1_S25_D2551,d.L1_S25_D2556,d.L1_S25_D2561,d.L1_S25_D2566,d.L1_S25_D2571,d.L1_S25_D2576,d.L1_S25_D2581,d.L1_S25_D2586,d.L1_S25_D2591,d.L1_S25_D2596,d.L1_S25_D2600,d.L1_S25_D2605,d.L1_S25_D2610,d.L1_S25_D2615,d.L1_S25_D2620,d.L1_S25_D2625,d.L1_S25_D2629,d.L1_S25_D2634,d.L1_S25_D2639,d.L1_S25_D2644,d.L1_S25_D2649,d.L1_S25_D2654,d.L1_S25_D2659,d.L1_S25_D2664,d.L1_S25_D2669,d.L1_S25_D2674,d.L1_S25_D2679,d.L1_S25_D2684,d.L1_S25_D2689,d.L1_S25_D2694,d.L1_S25_D2699,d.L1_S25_D2704,d.L1_S25_D2709,d.L1_S25_D2713,d.L1_S25_D2715,d.L1_S25_D2717,d.L1_S25_D2719,d.L1_S25_D2721,d.L1_S25_D2723,d.L1_S25_D2725,d.L1_S25_D2727)\n    - greatest(d.L1_S24_D677,d.L1_S24_D681,d.L1_S24_D685,d.L1_S24_D689,d.L1_S24_D693,d.L1_S24_D697,d.L1_S24_D702,d.L1_S24_D707,d.L1_S24_D712,d.L1_S24_D716,d.L1_S24_D721,d.L1_S24_D725,d.L1_S24_D730,d.L1_S24_D735,d.L1_S24_D739,d.L1_S24_D743,d.L1_S24_D748,d.L1_S24_D753,d.L1_S24_D758,d.L1_S24_D763,d.L1_S24_D768,d.L1_S24_D772,d.L1_S24_D777,d.L1_S24_D782,d.L1_S24_D787,d.L1_S24_D792,d.L1_S24_D797,d.L1_S24_D801,d.L1_S24_D804,d.L1_S24_D807,d.L1_S24_D809,d.L1_S24_D811,d.L1_S24_D813,d.L1_S24_D815,d.L1_S24_D818,d.L1_S24_D822,d.L1_S24_D826,d.L1_S24_D831,d.L1_S24_D836,d.L1_S24_D841,d.L1_S24_D846,d.L1_S24_D850,d.L1_S24_D854,d.L1_S24_D859,d.L1_S24_D864,d.L1_S24_D869,d.L1_S24_D874,d.L1_S24_D879,d.L1_S24_D884,d.L1_S24_D889,d.L1_S24_D894,d.L1_S24_D899,d.L1_S24_D904,d.L1_S24_D909,d.L1_S24_D913,d.L1_S24_D917,d.L1_S24_D922,d.L1_S24_D927,d.L1_S24_D932,d.L1_S24_D937,d.L1_S24_D941,d.L1_S24_D945,d.L1_S24_D950,d.L1_S24_D955,d.L1_S24_D960,d.L1_S24_D965,d.L1_S24_D970,d.L1_S24_D975,d.L1_S24_D980,d.L1_S24_D985,d.L1_S24_D990,d.L1_S24_D995,d.L1_S24_D999,d.L1_S24_D1001,d.L1_S24_D1003,d.L1_S24_D1005,d.L1_S24_D1007,d.L1_S24_D1009,d.L1_S24_D1011,d.L1_S24_D1013,d.L1_S24_D1015,d.L1_S24_D1018,d.L1_S24_D1023,d.L1_S24_D1028,d.L1_S24_D1033,d.L1_S24_D1038,d.L1_S24_D1043,d.L1_S24_D1048,d.L1_S24_D1053,d.L1_S24_D1058,d.L1_S24_D1062,d.L1_S24_D1066,d.L1_S24_D1070,d.L1_S24_D1074,d.L1_S24_D1077,d.L1_S24_D1081,d.L1_S24_D1085,d.L1_S24_D1089,d.L1_S24_D1092,d.L1_S24_D1096,d.L1_S24_D1100,d.L1_S24_D1104,d.L1_S24_D1108,d.L1_S24_D1112,d.L1_S24_D1116,d.L1_S24_D1120,d.L1_S24_D1124,d.L1_S24_D1128,d.L1_S24_D1132,d.L1_S24_D1135,d.L1_S24_D1138,d.L1_S24_D1141,d.L1_S24_D1143,d.L1_S24_D1146,d.L1_S24_D1149,d.L1_S24_D1151,d.L1_S24_D1153,d.L1_S24_D1155,d.L1_S24_D1158,d.L1_S24_D1163,d.L1_S24_D1168,d.L1_S24_D1171,d.L1_S24_D1173,d.L1_S24_D1175,d.L1_S24_D1178,d.L1_S24_D1182,d.L1_S24_D1186,d.L1_S24_D1190,d.L1_S24_D1194,d.L1_S24_D1199,d.L1_S24_D1204,d.L1_S24_D1209,d.L1_S24_D1214,d.L1_S24_D1218,d.L1_S24_D1222,d.L1_S24_D1227,d.L1_S24_D1232,d.L1_S24_D1237,d.L1_S24_D1242,d.L1_S24_D1247,d.L1_S24_D1252,d.L1_S24_D1257,d.L1_S24_D1262,d.L1_S24_D1267,d.L1_S24_D1272,d.L1_S24_D1277,d.L1_S24_D1281,d.L1_S24_D1285,d.L1_S24_D1290,d.L1_S24_D1295,d.L1_S24_D1300,d.L1_S24_D1305,d.L1_S24_D1309,d.L1_S24_D1313,d.L1_S24_D1318,d.L1_S24_D1323,d.L1_S24_D1328,d.L1_S24_D1333,d.L1_S24_D1338,d.L1_S24_D1343,d.L1_S24_D1348,d.L1_S24_D1353,d.L1_S24_D1358,d.L1_S24_D1363,d.L1_S24_D1368,d.L1_S24_D1373,d.L1_S24_D1378,d.L1_S24_D1383,d.L1_S24_D1388,d.L1_S24_D1393,d.L1_S24_D1398,d.L1_S24_D1403,d.L1_S24_D1408,d.L1_S24_D1413,d.L1_S24_D1418,d.L1_S24_D1423,d.L1_S24_D1428,d.L1_S24_D1433,d.L1_S24_D1438,d.L1_S24_D1443,d.L1_S24_D1448,d.L1_S24_D1453,d.L1_S24_D1457,d.L1_S24_D1461,d.L1_S24_D1465,d.L1_S24_D1469,d.L1_S24_D1472,d.L1_S24_D1476,d.L1_S24_D1480,d.L1_S24_D1484,d.L1_S24_D1488,d.L1_S24_D1492,d.L1_S24_D1496,d.L1_S24_D1500,d.L1_S24_D1504,d.L1_S24_D1508,d.L1_S24_D1511,d.L1_S24_D1513,d.L1_S24_D1515,d.L1_S24_D1517,d.L1_S24_D1519) AS gap_l1_s24_s25,\n  least(d.L3_S30_D3496,d.L3_S30_D3501,d.L3_S30_D3506,d.L3_S30_D3511,d.L3_S30_D3516,d.L3_S30_D3521,d.L3_S30_D3526,d.L3_S30_D3531,d.L3_S30_D3536,d.L3_S30_D3541,d.L3_S30_D3546,d.L3_S30_D3551,d.L3_S30_D3556,d.L3_S30_D3561,d.L3_S30_D3566,d.L3_S30_D3571,d.L3_S30_D3576,d.L3_S30_D3581,d.L3_S30_D3586,d.L3_S30_D3591,d.L3_S30_D3596,d.L3_S30_D3601,d.L3_S30_D3606,d.L3_S30_D3611,d.L3_S30_D3616,d.L3_S30_D3621,d.L3_S30_D3626,d.L3_S30_D3631,d.L3_S30_D3636,d.L3_S30_D3641,d.L3_S30_D3646,d.L3_S30_D3651,d.L3_S30_D3656,d.L3_S30_D3661,d.L3_S30_D3666,d.L3_S30_D3671,d.L3_S30_D3676,d.L3_S30_D3681,d.L3_S30_D3686,d.L3_S30_D3691,d.L3_S30_D3696,d.L3_S30_D3701,d.L3_S30_D3706,d.L3_S30_D3711,d.L3_S30_D3716,d.L3_S30_D3721,d.L3_S30_D3726,d.L3_S30_D3731,d.L3_S30_D3736,d.L3_S30_D3741,d.L3_S30_D3746,d.L3_S30_D3751,d.L3_S30_D3756,d.L3_S30_D3761,d.L3_S30_D3766,d.L3_S30_D3771,d.L3_S30_D3776,d.L3_S30_D3781,d.L3_S30_D3786,d.L3_S30_D3791,d.L3_S30_D3796,d.L3_S30_D3801,d.L3_S30_D3806,d.L3_S30_D3811,d.L3_S30_D3816,d.L3_S30_D3821,d.L3_S30_D3826,d.L3_S30_D3831)\n    - greatest(d.L3_S29_D3316,d.L3_S29_D3319,d.L3_S29_D3322,d.L3_S29_D3325,d.L3_S29_D3328,d.L3_S29_D3331,d.L3_S29_D3334,d.L3_S29_D3337,d.L3_S29_D3340,d.L3_S29_D3343,d.L3_S29_D3346,d.L3_S29_D3349,d.L3_S29_D3352,d.L3_S29_D3355,d.L3_S29_D3358,d.L3_S29_D3361,d.L3_S29_D3363,d.L3_S29_D3365,d.L3_S29_D3368,d.L3_S29_D3371,d.L3_S29_D3374,d.L3_S29_D3377,d.L3_S29_D3380,d.L3_S29_D3383,d.L3_S29_D3386,d.L3_S29_D3389,d.L3_S29_D3391,d.L3_S29_D3393,d.L3_S29_D3396,d.L3_S29_D3399,d.L3_S29_D3402,d.L3_S29_D3405,d.L3_S29_D3408,d.L3_S29_D3410,d.L3_S29_D3413,d.L3_S29_D3415,d.L3_S29_D3417,d.L3_S29_D3419,d.L3_S29_D3422,d.L3_S29_D3425,d.L3_S29_D3428,d.L3_S29_D3431,d.L3_S29_D3434,d.L3_S29_D3437,d.L3_S29_D3440,d.L3_S29_D3443,d.L3_S29_D3445,d.L3_S29_D3447,d.L3_S29_D3450,d.L3_S29_D3453,d.L3_S29_D3456,d.L3_S29_D3459,d.L3_S29_D3462,d.L3_S29_D3465,d.L3_S29_D3468,d.L3_S29_D3471,d.L3_S29_D3474,d.L3_S29_D3477,d.L3_S29_D3480,d.L3_S29_D3483,d.L3_S29_D3486,d.L3_S29_D3489,d.L3_S29_D3492) AS gap_l3_s29_s30\nFROM parts_date d",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id shuffle collapse=0.0 (<0.6), strict time refit retention=0.6134565556840629 (>=0.5), and row scope mismatch share=0.0, so the feature survives all production-line tests. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0125 -> 0.0125 (collapse 0%); strict time refit: retention 61% (time lift 0.0125, random lift 0.0204)",
+        "at": "2026-09-14T23:11:34+00:00"
+      }
+    ]
+  },
+  "f_053a0fba13": {
+    "feature_id": "f_053a0fba13",
+    "name": "l1s24_block_presence_pattern",
+    "hypothesis": "At a complex early station, parts can follow different internal measurement phases or get reworked mid-cycle; explicit presence of later L1_S24 blocks may capture these hidden sub-routes better than station-level missing counts.",
+    "sql": "SELECT\n  d.Id,\n  CASE WHEN n.L1_S24_F1118 IS NOT NULL THEN 1 ELSE 0 END AS l1s24_blk1118,\n  CASE WHEN n.L1_S24_F1512 IS NOT NULL THEN 1 ELSE 0 END AS l1s24_blk1512,\n  CASE WHEN n.L1_S24_F1829 IS NOT NULL THEN 1 ELSE 0 END AS l1s24_blk1829,\n  (CASE WHEN n.L1_S24_F1118 IS NOT NULL THEN 1 ELSE 0 END)\n    + 2 * (CASE WHEN n.L1_S24_F1512 IS NOT NULL THEN 1 ELSE 0 END)\n    + 4 * (CASE WHEN n.L1_S24_F1829 IS NOT NULL THEN 1 ELSE 0 END) AS l1s24_presence_code\nFROM parts_date d\nJOIN parts_numeric n USING (Id)",
+    "proposed_by": "hypothesis_agent",
+    "status": "quarantined",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "quarantined",
+        "finding": "Quarantined: strict time refit retention is 0.0 (< 0.5), with Id shuffle collapse 0.0 and row scope mismatch share 0.0. The decisive failure is the strict time refit result, which shows no retained lift under time-ordered refit. | Evidence: strict time refit: kept 0% of random-split lift (< 50%)",
+        "at": "2026-09-14T23:12:43+00:00"
+      }
+    ]
+  },
+  "f_52bc6f4ffc": {
+    "feature_id": "f_52bc6f4ffc",
+    "name": "l3s29s30_tail_presence",
+    "hypothesis": "Near the main failing section, missing the tail subset of measurements can represent skipped checks, short cycles, or alternate work content; explicit tail presence may be more predictive than total missing counts.",
+    "sql": "SELECT\n  d.Id,\n  CASE WHEN n.L3_S29_F3479 IS NOT NULL THEN 1 ELSE 0 END AS l3s29_tail_present,\n  CASE WHEN n.L3_S30_F3774 IS NOT NULL THEN 1 ELSE 0 END AS l3s30_tail_present,\n  (CASE WHEN n.L3_S29_F3479 IS NOT NULL THEN 1 ELSE 0 END)\n    + 2 * (CASE WHEN n.L3_S30_F3774 IS NOT NULL THEN 1 ELSE 0 END) AS l3_tail_presence_code\nFROM parts_date d\nJOIN parts_numeric n USING (Id)",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: row scope check passed with 0 mismatched of 355038 rows (mismatch share 0.0); Id shuffle test showed 0.0 collapse (lift 0.001181374577777894, shuffled_lift 0.001181374577777894); strict time refit retention was 1.0 (time_lift 0.001181374577777894, random_lift 0.012852477651193128), so it survives production-line constraints. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0012 -> 0.0012 (collapse 0%); strict time refit: retention 100% (time lift 0.0012, random lift 0.0129)",
+        "at": "2026-09-14T23:12:50+00:00"
+      }
+    ]
+  },
+  "f_8dc09cf70c": {
+    "feature_id": "f_8dc09cf70c",
+    "name": "l3_exact_probe_deviation",
+    "hypothesis": "A specific downstream probe drifting high or low can directly create defects; centering one or two dense L3 measurements may expose miscalibration that station min/max and range dilute.",
+    "sql": "SELECT\n  d.Id,\n  n.L3_S29_F3482 AS l3s29_f3482_raw,\n  n.L3_S30_F3779 AS l3s30_f3779_raw\nFROM parts_date d\nJOIN parts_numeric n USING (Id)",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: row scope check found 0 mismatches out of 355,038 rows (mismatch_share 0.0), id shuffle test showed no collapse (lift 0.0, shuffled_lift 0.0, collapse 0.0), and strict time refit retained fully (retention 1.0; time_lift 0.0 vs random_lift 0.006729419609853626). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0000 -> 0.0000 (collapse 0%); strict time refit: retention 100% (time lift 0.0000, random lift 0.0067)",
+        "at": "2026-09-14T23:14:00+00:00"
+      }
+    ]
   }
 }
