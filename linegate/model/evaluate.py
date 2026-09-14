@@ -47,3 +47,27 @@ def best_threshold(sweep: Sweep) -> tuple[float, float]:
 def confusion_at(sweep: Sweep, threshold: float) -> dict[str, int]:
     i = int(np.argmin(np.abs(sweep.thresholds - threshold)))
     return {k: int(getattr(sweep, k)[i]) for k in ("tp", "fp", "tn", "fn")}
+
+
+def roc_auc(y: np.ndarray, p: np.ndarray) -> float:
+    ranks = np.empty(len(p))
+    order = np.argsort(p, kind="mergesort")
+    sorted_p = p[order]
+    _, first, counts = np.unique(sorted_p, return_index=True, return_counts=True)
+    ranks[order] = np.repeat(first + (counts + 1) / 2.0, counts)
+    pos = np.asarray(y) == 1
+    n_pos, n_neg = pos.sum(), (~pos).sum()
+    return float((ranks[pos].sum() - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg))
+
+
+def bootstrap_mcc(y: np.ndarray, p: np.ndarray, threshold: float, draws: int = 500, seed: int = 0) -> tuple[float, float]:
+    """5th and 95th percentile of MCC at a fixed threshold over bootstrap resamples."""
+    rng = np.random.default_rng(seed)
+    y, predicted = np.asarray(y) == 1, np.asarray(p) >= threshold
+    scores = []
+    for _ in range(draws):
+        i = rng.integers(0, len(y), len(y))
+        yy, pp = y[i], predicted[i]
+        scores.append(mcc_from_counts((pp & yy).sum(), (pp & ~yy).sum(), (~pp & ~yy).sum(), (~pp & yy).sum()))
+    lo, hi = np.percentile(scores, [5, 95])
+    return float(lo), float(hi)

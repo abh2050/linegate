@@ -1,10 +1,17 @@
 algorithm: lightgbm
 objective: binary
-num_leaves: 63
-learning_rate: 0.05
-n_estimators: 800
-min_child_samples: 200
-scale_pos_weight: auto
-early_stopping_rounds: 50
-random_state: 17
+num_leaves: 31
+learning_rate: 0.03
+n_estimators: 3000
+min_child_samples: 100
+feature_fraction: 0.3
+bagging_fraction: 0.8
+bagging_freq: 1
+lambda_l2: 10.0
+scale_pos_weight: 1
+early_stopping_rounds: 200
+early_stopping_metric: average_precision
+early_stopping_share: 0.15   # latest share of train, by part start time
+seeds: [17, 1, 2]
 leak_tripwire_mcc: 0.40
+categorical_min_share: 0.0001   # train parts with a value, to code a categorical column

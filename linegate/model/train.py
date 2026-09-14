@@ -1,9 +1,11 @@
-"""Train the fixed-config LightGBM baseline on train, evaluate on validation (Gate 1).
+"""Train the LightGBM baseline on train, evaluate on validation (Gate 1).
 
-Reads only the train and validation views of the catalog. Writes metrics,
-the model, and validation scores to data/artifacts/baseline/. Metrics are
-written before the MCC tripwire runs, so a failed gate still leaves results
-to inspect. Never touches the holdout.
+Early stopping uses the latest share of the train split by part start time,
+so validation labels never steer the number of trees. Each seed in the config
+trains one booster and their scores are averaged. Reads only the train and
+validation views of the catalog. Metrics are written before the MCC tripwire
+runs, so a failed gate still leaves results to inspect. Never touches the
+holdout.
 """
 
 from __future__ import annotations
@@ -22,11 +24,11 @@ from linegate.dataio import CONFIG_DIR, DATA_DIR, PARQUET_DIR
 from linegate.dataio.duck import CATALOG_NAME
 from linegate.dataio.resources import configure, worker_threads
 from linegate.features import compute
+from linegate.features.baseline import select_categorical
 from linegate.model import evaluate, guards
 
 ARTIFACT_DIR = DATA_DIR / "artifacts" / "baseline"
 GATE1_MIN_MCC = 0.12
-EARLY_STOP_METRIC = "auc"
 START = time.monotonic()
 
 
@@ -48,22 +50,43 @@ def scale_pos_weight(setting, y: np.ndarray) -> float:
     return (len(y) - positives) / positives
 
 
-def lgb_params(cfg: dict, y: np.ndarray) -> dict:
-    return {
-        "objective": cfg["objective"], "metric": EARLY_STOP_METRIC, "num_leaves": cfg["num_leaves"],
-        "learning_rate": cfg["learning_rate"], "min_child_samples": cfg["min_child_samples"],
-        "scale_pos_weight": scale_pos_weight(cfg["scale_pos_weight"], y), "seed": cfg["random_state"],
-        "num_threads": worker_threads(), "force_col_wise": True, "verbose": -1,
+def lgb_params(cfg: dict, y: np.ndarray, seed: int) -> dict:
+    keys = ("objective", "num_leaves", "learning_rate", "min_child_samples", "feature_fraction",
+            "bagging_fraction", "bagging_freq", "lambda_l2")
+    return {k: cfg[k] for k in keys} | {
+        "metric": cfg["early_stopping_metric"], "scale_pos_weight": scale_pos_weight(cfg["scale_pos_weight"], y),
+        "seed": seed, "num_threads": worker_threads(), "force_col_wise": True, "verbose": -1,
     }
 
 
-def fit(cfg: dict, train: tuple, valid: tuple, names: list[str], categorical: list[str]) -> lgb.Booster:
+def early_stopping_mask(start: np.ndarray, share: float) -> np.ndarray:
+    """The latest `share` of parts by start time. Parts without a timestamp are never in it."""
+    count = int(round(share * len(start)))
+    dated = np.flatnonzero(~np.isnan(start))
+    latest = dated[np.argsort(start[dated], kind="stable")[::-1][:count]]
+    mask = np.zeros(len(start), dtype=bool)
+    mask[latest] = True
+    return mask
+
+
+def fit_ensemble(cfg: dict, X: np.ndarray, y: np.ndarray, start: np.ndarray,
+                 names: list[str], categorical: list[str]) -> list[lgb.Booster]:
     guards.check_feature_names(names)
-    dtrain = lgb.Dataset(train[0], label=train[1], feature_name=names, categorical_feature=categorical or "auto")
-    dvalid = lgb.Dataset(valid[0], label=valid[1], reference=dtrain)
-    callbacks = [lgb.early_stopping(cfg["early_stopping_rounds"], verbose=False), lgb.log_evaluation(50)]
-    return lgb.train(lgb_params(cfg, train[1]), dtrain, num_boost_round=cfg["n_estimators"],
-                     valid_sets=[dvalid], valid_names=["validation"], callbacks=callbacks)
+    stop = early_stopping_mask(start, cfg["early_stopping_share"])
+    dfit = lgb.Dataset(X[~stop], label=y[~stop], feature_name=names,
+                       categorical_feature=categorical or "auto", free_raw_data=False)
+    dstop = lgb.Dataset(X[stop], label=y[stop], reference=dfit)
+    boosters = []
+    for seed in cfg["seeds"]:
+        callbacks = [lgb.early_stopping(cfg["early_stopping_rounds"], verbose=False), lgb.log_evaluation(100)]
+        boosters.append(lgb.train(lgb_params(cfg, y[~stop], seed), dfit, num_boost_round=cfg["n_estimators"],
+                                  valid_sets=[dstop], valid_names=["train_tail"], callbacks=callbacks))
+        log(f"seed {seed}: best iteration {boosters[-1].best_iteration}")
+    return boosters
+
+
+def predict_ensemble(boosters: list[lgb.Booster], X: np.ndarray) -> np.ndarray:
+    return np.mean([b.predict(X, num_iteration=b.best_iteration) for b in boosters], axis=0)
 
 
 def catalog_connection(parquet_dir: Path = PARQUET_DIR) -> duckdb.DuckDBPyConnection:
@@ -74,49 +97,81 @@ def catalog_connection(parquet_dir: Path = PARQUET_DIR) -> duckdb.DuckDBPyConnec
     return con
 
 
-def build_matrices(con: duckdb.DuckDBPyConnection, out_dir: Path) -> tuple:
+def selected_categorical(con: duckdb.DuckDBPyConnection, cfg: dict, out_dir: Path) -> list[str]:
+    path = out_dir / f"{compute.FEATURE_SET}_categorical_columns.json"
+    if not path.exists():
+        parts = con.execute("SELECT count(*) FROM train_categorical").fetchone()[0]
+        columns = select_categorical(con, min_count=max(1, int(cfg["categorical_min_share"] * parts)))
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(columns, indent=2) + "\n")
+    return json.loads(path.read_text())
+
+
+def build_matrices(con: duckdb.DuckDBPyConnection, cfg: dict, out_dir: Path) -> tuple:
+    categorical = selected_categorical(con, cfg, out_dir)
     paths = {}
     for split in ("train", "validation"):
-        path = out_dir / f"baseline_{split}.parquet"
-        paths[split] = path if path.exists() else compute.materialize(con, split, out_dir)
-        log(f"features ready: {paths[split].name}")
+        path = out_dir / f"{compute.FEATURE_SET}_{split}.parquet"
+        paths[split] = path if path.exists() else compute.materialize(con, split, out_dir, categorical)
+        log(f"features ready: {paths[split].name} ({len(categorical)} categorical columns coded)")
     compute.fit_route_codes(con, paths["train"])
     return compute.load_matrix(con, paths["train"]), compute.load_matrix(con, paths["validation"])
 
 
-def summarize(cfg, booster, names, y_val, p_val, seconds) -> dict:
+def threshold_report(boosters, train: compute.Matrix, cfg: dict, y_val: np.ndarray, p_val: np.ndarray) -> dict:
     sweep = evaluate.confusion_sweep(y_val, p_val)
     threshold, mcc = evaluate.best_threshold(sweep)
-    gains = booster.feature_importance("gain")
-    top = sorted(zip(names, gains.tolist()), key=lambda kv: -kv[1])[:25]
+    stop = early_stopping_mask(train.start, cfg["early_stopping_share"])
+    tail_threshold, _ = evaluate.best_threshold(
+        evaluate.confusion_sweep(train.y[stop], predict_ensemble(boosters, train.X[stop])))
+    lo, hi = evaluate.bootstrap_mcc(y_val, p_val, threshold)
     return {
-        "validation_mcc": mcc, "threshold": threshold, "confusion": evaluate.confusion_at(sweep, threshold),
-        "best_iteration": booster.best_iteration, "validation_auc": booster.best_score["validation"]["auc"],
-        "validation_parts": int(len(y_val)), "validation_positive_rate": float(np.mean(y_val)),
-        "feature_count": len(names), "train_seconds": round(seconds, 1), "top_gain_features": top,
-        "model_config": cfg, "holdout_touched": False,
+        "validation_mcc": mcc, "threshold": threshold, "validation_mcc_ci90": [lo, hi],
+        "confusion": evaluate.confusion_at(sweep, threshold), "train_tail_threshold": tail_threshold,
+        "validation_mcc_at_train_tail_threshold": float(sweep.mcc[np.argmin(np.abs(sweep.thresholds - tail_threshold))]),
     }
+
+
+def summarize(cfg, boosters, train: compute.Matrix, valid: compute.Matrix, p_val, seconds) -> dict:
+    gains = np.sum([b.feature_importance("gain") for b in boosters], axis=0)
+    top = sorted(zip(train.names, gains.tolist()), key=lambda kv: -kv[1])[:25]
+    per_seed = [evaluate.best_threshold(evaluate.confusion_sweep(valid.y, b.predict(valid.X, num_iteration=b.best_iteration)))[1]
+                for b in boosters]
+    return threshold_report(boosters, train, cfg, valid.y, p_val) | {
+        "validation_auc": evaluate.roc_auc(valid.y, p_val), "per_seed_validation_mcc": per_seed,
+        "best_iterations": [b.best_iteration for b in boosters], "feature_set": compute.FEATURE_SET,
+        "validation_parts": int(len(valid.y)), "validation_positive_rate": float(np.mean(valid.y)),
+        "train_positive_rate": float(np.mean(train.y)), "feature_count": len(train.names),
+        "train_seconds": round(seconds, 1), "top_gain_features": top, "model_config": cfg, "holdout_touched": False,
+    }
+
+
+def save(out_dir: Path, boosters, valid: compute.Matrix, p_val: np.ndarray, metrics: dict) -> None:
+    for seed, booster in zip(metrics["model_config"]["seeds"], boosters):
+        booster.save_model(str(out_dir / f"model_seed{seed}.txt"), num_iteration=booster.best_iteration)
+    np.savez_compressed(out_dir / "validation_scores.npz", id=valid.ids, y=valid.y, p=p_val)
+    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
 
 
 def run(out_dir: Path = ARTIFACT_DIR) -> dict:
     cfg = load_model_config()
     with catalog_connection() as con:
-        (_, y_tr, X_tr, names), (id_va, y_va, X_va, _) = build_matrices(con, out_dir)
-    log(f"train {X_tr.shape}, validation {X_va.shape}, positives {int(y_tr.sum())}/{int(y_va.sum())}")
+        train, valid = build_matrices(con, cfg, out_dir)
+    log(f"train {train.X.shape}, validation {valid.X.shape}, positives {int(train.y.sum())}/{int(valid.y.sum())}")
     started = time.monotonic()
-    booster = fit(cfg, (X_tr, y_tr), (X_va, y_va), names, categorical=["route_code"])
-    p_va = booster.predict(X_va, num_iteration=booster.best_iteration)
-    metrics = summarize(cfg, booster, names, y_va, p_va, time.monotonic() - started)
-    booster.save_model(str(out_dir / "model.txt"), num_iteration=booster.best_iteration)
-    np.savez_compressed(out_dir / "validation_scores.npz", id=id_va, y=y_va, p=p_va)
-    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
+    boosters = fit_ensemble(cfg, train.X, train.y, train.start, train.names, categorical=["route_code"])
+    p_val = predict_ensemble(boosters, valid.X)
+    metrics = summarize(cfg, boosters, train, valid, p_val, time.monotonic() - started)
+    save(out_dir, boosters, valid, p_val, metrics)
     return metrics
 
 
 def main() -> int:
     metrics = run()
-    log(f"validation MCC {metrics['validation_mcc']:.4f} at threshold {metrics['threshold']}, "
-        f"AUC {metrics['validation_auc']:.4f}, best iteration {metrics['best_iteration']}")
+    lo, hi = metrics["validation_mcc_ci90"]
+    log(f"validation MCC {metrics['validation_mcc']:.4f} (90% CI {lo:.3f}-{hi:.3f}) at threshold {metrics['threshold']}; "
+        f"at train-tail threshold {metrics['validation_mcc_at_train_tail_threshold']:.4f}; "
+        f"AUC {metrics['validation_auc']:.4f}; per seed {[round(m, 4) for m in metrics['per_seed_validation_mcc']]}")
     try:
         guards.check_validation_mcc(metrics["validation_mcc"], GATE1_MIN_MCC, load_model_config()["leak_tripwire_mcc"])
     except (guards.LeakageSuspected, guards.PipelineBroken) as exc:

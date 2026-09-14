@@ -31,3 +31,21 @@ def test_best_threshold_picks_max_mcc():
     p = np.array([0.1, 0.2, 0.6, 0.7, 0.9])
     t, mcc = evaluate.best_threshold(evaluate.confusion_sweep(y, p, np.array([0.05, 0.5, 0.65])))
     assert (t, mcc) == (0.65, 1.0)
+
+
+def test_roc_auc_matches_pairwise_definition():
+    rng = np.random.default_rng(3)
+    y = (rng.random(300) < 0.2).astype(int)
+    p = np.round(rng.random(300), 2)
+    pos, neg = p[y == 1], p[y == 0]
+    pairwise = ((pos[:, None] > neg[None, :]).sum() + 0.5 * (pos[:, None] == neg[None, :]).sum()) / (len(pos) * len(neg))
+    assert abs(evaluate.roc_auc(y, p) - pairwise) < 1e-12
+
+
+def test_bootstrap_interval_brackets_point_estimate():
+    rng = np.random.default_rng(4)
+    y = (rng.random(5000) < 0.05).astype(int)
+    p = np.clip(y * 0.4 + rng.random(5000) * 0.6, 0, 1)
+    lo, hi = evaluate.bootstrap_mcc(y, p, threshold=0.5, draws=200)
+    point = evaluate.confusion_sweep(y, p, np.array([0.5])).mcc[0]
+    assert lo < point < hi
