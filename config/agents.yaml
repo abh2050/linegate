@@ -1,4 +1,7 @@
-model: claude-sonnet-5
+provider: openai                          # ADR-0004: no Anthropic key available
+model: gpt-5.4-mini
+usd_per_million_input_tokens: 0.75        # assumption: verify against current OpenAI pricing
+usd_per_million_output_tokens: 4.50       # assumption: verify against current OpenAI pricing
 hypothesis:
   max_evaluate_calls: 40
   max_usd: 8.00
@@ -7,6 +10,10 @@ hypothesis:
 warden:
   id_shuffle_collapse_threshold: 0.60   # lift loss that triggers quarantine
   strict_split_min_retention: 0.50
+  min_lift: 0.005                       # below this, collapse and retention are not meaningful
+  row_scope_sample_fraction: 0.5
+  max_usd: 1.00                         # per feature review
+  max_turns: 8
 disposition:
   neighbors_k: 20
   citation_validation: strict

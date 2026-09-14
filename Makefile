@@ -1,6 +1,6 @@
 UV := uv run
 
-.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2
+.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status gate-2 gate-3
 
 setup:
 	uv sync
@@ -49,3 +49,7 @@ gate-1-status:
 gate-2:
 	$(UV) pytest tests/unit -q
 	$(UV) python -m linegate.cost.policy
+
+gate-3:
+	$(UV) pytest tests/unit -q
+	$(UV) python scripts/red_team_leak.py
