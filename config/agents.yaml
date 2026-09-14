@@ -3,6 +3,9 @@ model: gpt-5.4-mini
 usd_per_million_input_tokens: 0.75        # assumption: verify against current OpenAI pricing
 usd_per_million_output_tokens: 4.50       # assumption: verify against current OpenAI pricing
 hypothesis:
+  model: gpt-5.4                        # stronger model for search; the warden keeps the default model
+  usd_per_million_input_tokens: 2.50    # assumption: verify against current OpenAI pricing
+  usd_per_million_output_tokens: 15.00  # assumption: verify against current OpenAI pricing
   max_evaluate_calls: 40
   max_usd: 8.00
   stop_after_failed_proposals: 3

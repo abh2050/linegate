@@ -103,5 +103,37 @@
         "at": "2026-09-14T22:37:45+00:00"
       }
     ]
+  },
+  "f_cb82b100c5": {
+    "feature_id": "f_cb82b100c5",
+    "name": "l1_s24_variant_a",
+    "hypothesis": "Station L1_S24 shows several rare sub-routes with very different missingness levels, suggesting alternate fixtures or product variants. A defect-prone variant would consistently produce a distinct categorical code pattern at that station.",
+    "sql": "SELECT Id,\n  CASE\n    WHEN L1_S24_F1510 IS NOT NULL THEN 1\n    WHEN L1_S24_F1459 IS NOT NULL THEN 2\n    WHEN L1_S24_F1584 IS NOT NULL THEN 3\n    WHEN L1_S24_F1675 IS NOT NULL THEN 4\n    ELSE 0\n  END AS l1_s24_variant_a\nFROM parts_categorical",
+    "proposed_by": "hypothesis_agent",
+    "status": "quarantined",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "quarantined",
+        "finding": "Quarantine: strict time refit retention is 0.0, below the 0.5 threshold, so the feature fails the live-line temporal test. Id shuffle collapse is 0.0 and row scope mismatch share is 0.0, but the strict time refit result alone requires quarantine. | Evidence: strict time refit: kept 0% of random-split lift (< 50%)",
+        "at": "2026-09-14T22:57:45+00:00"
+      }
+    ]
+  },
+  "f_5820734512": {
+    "feature_id": "f_5820734512",
+    "name": "l1_s25_presence_count",
+    "hypothesis": "The compact L1_S25 block near the early station columns is a rare sub-route or machine setting. Counting how many of those exact columns are present should isolate that route state cleanly and may track a defect-prone branch.",
+    "sql": "SELECT Id,\n  (CASE WHEN L1_S25_F1852 IS NOT NULL THEN 1 ELSE 0 END +\n   CASE WHEN L1_S25_F1853 IS NOT NULL THEN 1 ELSE 0 END +\n   CASE WHEN L1_S25_F1856 IS NOT NULL THEN 1 ELSE 0 END +\n   CASE WHEN L1_S25_F1859 IS NOT NULL THEN 1 ELSE 0 END +\n   CASE WHEN L1_S25_F1861 IS NOT NULL THEN 1 ELSE 0 END +\n   CASE WHEN L1_S25_F1863 IS NOT NULL THEN 1 ELSE 0 END +\n   CASE WHEN L1_S25_F1866 IS NOT NULL THEN 1 ELSE 0 END +\n   CASE WHEN L1_S25_F1868 IS NOT NULL THEN 1 ELSE 0 END) AS l1_s25_presence_count\nFROM parts_categorical",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: row scope check had 0/355038 mismatches (0.0%); Id shuffle collapse was 0.0 (< 0.6); strict time refit retention was 1.0 (>= 0.5). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0012 -> 0.0012 (collapse 0%); strict time refit: retention 100% (time lift 0.0012, random lift 0.0000)",
+        "at": "2026-09-14T22:58:36+00:00"
+      }
+    ]
   }
 }

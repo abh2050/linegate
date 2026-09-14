@@ -352,7 +352,9 @@ def build_search(agents: dict, holdout: np.ndarray, trace: TraceWriter, warden_t
     hyp, wcfg = agents["hypothesis"], agents["warden"]
     baseline = json.loads((train.ARTIFACT_DIR / "metrics.json").read_text())
     pricing = (agents["usd_per_million_input_tokens"], agents["usd_per_million_output_tokens"])
+    search_pricing = (hyp["usd_per_million_input_tokens"], hyp["usd_per_million_output_tokens"])
     registry, lab, client = FeatureRegistry(), LeakLab(wcfg), OpenAIClient(agents["model"])
+    search_client = OpenAIClient(hyp["model"])
     explore = ExploreTools(set(holdout.tolist()), baseline)
 
     def reviewer(fid: str):
@@ -364,9 +366,9 @@ def build_search(agents: dict, holdout: np.ndarray, trace: TraceWriter, warden_t
     reference = scorer.calibrate(hyp["placebo_runs"], SEARCH_DIR / "noise_reference.json")
     trace.write("noise_reference", **{k: v for k, v in reference.items() if k != "runs"})
     session = SearchSession(registry, reviewer, scorer, reference, hyp, trace, set(holdout.tolist()), dry_run=explore.dry_run)
-    budget = Budget(max_usd=hyp["max_usd"], usd_per_mtok_in=pricing[0], usd_per_mtok_out=pricing[1],
+    budget = Budget(max_usd=hyp["max_usd"], usd_per_mtok_in=search_pricing[0], usd_per_mtok_out=search_pricing[1],
                     max_calls={"evaluate": hyp["max_evaluate_calls"]})
-    return client, session, explore.tools() + session.tools(), budget, task_message(baseline, reference, hyp)
+    return search_client, session, explore.tools() + session.tools(), budget, task_message(baseline, reference, hyp)
 
 
 def main() -> int:

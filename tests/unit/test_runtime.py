@@ -111,3 +111,26 @@ def test_nudge_resumes_an_agent_that_stops_early(tmp_path):
     kinds = [e["event"] for e in events(tmp_path / "t.jsonl")]
     assert kinds.count("nudge") == 2 and result == "really done"
     assert client.seen[1][-1] == {"role": "user", "content": "keep searching"}
+
+
+def test_compact_elides_oldest_tool_results_first():
+    big = "x" * 1000
+    messages = [{"role": "system", "content": "s"}, {"role": "user", "content": "task"}]
+    for i in range(12):
+        messages += [{"role": "assistant", "content": f"turn {i}"}, {"role": "tool", "tool_call_id": str(i), "content": big}]
+    elided = runtime.compact(messages, max_chars=8000)
+    tools = [m for m in messages if m["role"] == "tool"]
+    assert elided > 0 and tools[0]["content"] == runtime.ELIDED and tools[-1]["content"] == big
+    assert messages[1]["content"] == "task"
+    assert sum(len(json.dumps(m)) for m in messages) <= 8000
+
+
+def test_llm_error_ends_the_run_cleanly(tmp_path):
+    class Broken:
+        def complete(self, messages, tools):
+            raise RuntimeError("context_length_exceeded")
+
+    trace = TraceWriter(tmp_path / "t.jsonl")
+    assert runtime.run_agent(Broken(), "sys", "go", TOOLS, Budget(max_usd=1.0), trace, max_turns=3) == ""
+    kinds = [e["event"] for e in events(tmp_path / "t.jsonl")]
+    assert kinds[-2:] == ["llm_error", "agent_end"]

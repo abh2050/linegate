@@ -112,6 +112,25 @@ def assistant_message(completion: Completion) -> dict:
     return message
 
 
+MAX_CONTEXT_CHARS = 400_000  # about 100k tokens
+KEEP_RECENT_MESSAGES = 8
+ELIDED = json.dumps({"elided": "older tool result removed to save context; call the tool again if you need it"})
+
+
+def compact(messages: list[dict], max_chars: int = MAX_CONTEXT_CHARS) -> int:
+    """Replace the oldest tool results with a stub until the conversation fits. Returns how many were elided."""
+    size = sum(len(json.dumps(m, default=str)) for m in messages)
+    elided = 0
+    for message in messages[2:-KEEP_RECENT_MESSAGES]:
+        if size <= max_chars:
+            break
+        if message["role"] == "tool" and message["content"] != ELIDED:
+            size -= len(message["content"]) - len(ELIDED)
+            message["content"] = ELIDED
+            elided += 1
+    return elided
+
+
 def dispatch(call: ToolCall, tools: dict[str, Tool], budget: Budget, trace: TraceWriter) -> dict:
     tool = tools.get(call.name)
     if tool is None:
@@ -146,7 +165,14 @@ def run_agent(client: LLMClient, system: str, task: str, tools: list[Tool], budg
     messages = [{"role": "system", "content": system}, {"role": "user", "content": task}]
     trace.write("agent_start", task=task, tools=list(registry), max_usd=budget.max_usd)
     for turn in range(max_turns):
-        completion = client.complete(messages, specs)
+        if elided := compact(messages):
+            trace.write("context_compacted", elided_tool_results=elided)
+        try:
+            completion = client.complete(messages, specs)
+        except Exception as exc:  # the caller still gets to write its summary and judge the gate
+            trace.write("llm_error", error=repr(exc)[:2000])
+            trace.write("agent_end", reason="llm error")
+            return ""
         budget.charge(completion)
         trace.write("model_turn", turn=turn, text=completion.text, spent_usd=round(budget.spent_usd, 4),
                     tool_calls=[{"name": c.name, "arguments": c.arguments} for c in completion.tool_calls])
