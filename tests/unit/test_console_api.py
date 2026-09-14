@@ -42,6 +42,7 @@ def client(tmp_path):
 def test_queue_and_keyboard_actions_write_confirmed_labels(client):
     c, tmp = client
     assert [i["part_id"] for i in c.get("/api/queue").json()["items"]] == [11, 12]
+    assert c.get("/api/queue").json()["items"][0]["has_disposition"] is False
     assert c.post("/api/parts/11/disposition", json={"action": "scrap"}).json()["label"] == 1
     assert c.post("/api/parts/12/disposition", json={"action": "senior_review"}).json()["label"] is None
     assert c.get("/api/queue").json()["items"] == []

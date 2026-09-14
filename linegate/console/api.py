@@ -56,7 +56,14 @@ def create_app(store, disposition_dir: Path, confirmed_path: Path, test_mode: bo
     def queue(limit: int = 100) -> dict:
         decided = {d["part_id"] for d in labels.load_decisions(confirmed_path)}
         items = [q for q in store.queue() if q["part_id"] not in decided]
-        return {"total": len(items), "items": items[:limit]}
+        page = [q | {"has_disposition": (disposition_dir / f"{q['part_id']}.json").exists()} for q in items[:limit]]
+        return {"total": len(items), "decided": len(decided), "items": page}
+
+    @app.get("/api/policy")
+    def current_policy() -> dict:
+        pol = getattr(store, "policy", {})
+        keys = ("version", "threshold", "band_low", "band_high", "dollars_per_shift", "abstain_share")
+        return {k: pol.get(k) for k in keys}
 
     @app.get("/api/parts/{part_id}")
     def part(part_id: int) -> dict:
