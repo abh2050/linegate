@@ -130,6 +130,9 @@ def dispatch(call: ToolCall, tools: dict[str, Tool], budget: Budget, trace: Trac
     except ToolRefused as exc:
         trace.write("tool_refused", tool=call.name, arguments=args.model_dump(), reason=str(exc))
         return {"error": f"refused: {exc}"}
+    except Exception as exc:  # a failing tool must not end the run; the model sees the error
+        trace.write("tool_error", tool=call.name, arguments=args.model_dump(), error=repr(exc)[:2000])
+        return {"error": f"tool failed: {str(exc)[:1000]}"}
     payload = result.model_dump() if isinstance(result, BaseModel) else result
     trace.write("tool_result", tool=call.name, arguments=args.model_dump(), result=payload)
     return {"result": payload}

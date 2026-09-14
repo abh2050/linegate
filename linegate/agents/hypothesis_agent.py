@@ -44,8 +44,10 @@ MAX_RESULT_CHARS = 30_000
 
 
 class SearchSession:
-    def __init__(self, registry, reviewer, scorer, baseline: dict, cfg: dict, trace: TraceWriter, holdout_ids: set):
+    def __init__(self, registry, reviewer, scorer, baseline: dict, cfg: dict, trace: TraceWriter, holdout_ids: set,
+                 dry_run=lambda sql: None):
         self.registry, self.reviewer, self.scorer, self.cfg, self.trace = registry, reviewer, scorer, cfg, trace
+        self.dry_run = dry_run
         self.holdout_ids = holdout_ids
         self.baseline_mcc = self.best_mcc = baseline["validation_mcc"]
         self.best_per_seed = list(baseline["per_seed_validation_mcc"])
@@ -57,8 +59,9 @@ class SearchSession:
     def propose(self, args: ProposeInput) -> dict:
         try:
             check_query(args.sql, FEATURE_VIEWS, self.holdout_ids, allow_windows=False)
+            self.dry_run(args.sql)
             fid = self.registry.propose(args.name, args.hypothesis, args.sql, "hypothesis_agent")
-        except (SQLRejected, RegistryError) as exc:
+        except (SQLRejected, RegistryError, sandbox.FeatureSQLError) as exc:
             raise ToolRefused(str(exc)) from exc
         record = self.registry.get(fid)
         if record.status == "proposed":
@@ -219,6 +222,17 @@ class ExploreTools:
         return {"columns": names, "rows": rows if len(text) <= MAX_RESULT_CHARS else rows[: max(1, len(rows) * MAX_RESULT_CHARS // len(text))],
                 "truncated": len(text) > MAX_RESULT_CHARS}
 
+    def dry_run(self, sql: str) -> None:
+        """Bind feature SQL against the train sandbox without computing it."""
+        sandbox.check_feature_sql(sql)
+        with sandbox.open_sandbox("train", "plain", parquet_dir=self.parquet_dir) as sb:
+            try:
+                names = [d[0] for d in sb.con.execute(f"SELECT * FROM ({sql.strip().rstrip(';')}) LIMIT 0").description]
+            except duckdb.Error as exc:
+                raise sandbox.FeatureSQLError(f"feature SQL does not run: {str(exc)[:800]}") from exc
+        if "Id" not in names or len(names) < 2:
+            raise sandbox.FeatureSQLError("feature SQL must return Id plus at least one feature column")
+
     def get_station_map(self, _: EmptyInput) -> dict:
         return station_map(self.columns)
 
@@ -305,16 +319,18 @@ def main() -> int:
     registry, lab, client = FeatureRegistry(), LeakLab(wcfg), OpenAIClient(agents["model"])
     trace_path, warden_trace = new_trace_path("hypothesis"), new_trace_path("warden-search")
     trace = TraceWriter(trace_path)
+    explore = ExploreTools(set(holdout.tolist()), baseline)
     def reviewer(fid: str):
         decision = review_feature(fid, registry, client, wcfg, warden_trace, lab, pricing)
         lab.evict(registry.get(fid).sql, keep_plain=decision.final == "approved")
         return decision
 
     session = SearchSession(registry, reviewer,
-                            EnsembleScorer(train.load_model_config(), lab, holdout), baseline, hyp, trace, set(holdout.tolist()))
+                            EnsembleScorer(train.load_model_config(), lab, holdout), baseline, hyp, trace, set(holdout.tolist()),
+                            dry_run=explore.dry_run)
     budget = Budget(max_usd=hyp["max_usd"], usd_per_mtok_in=pricing[0], usd_per_mtok_out=pricing[1],
                     max_calls={"evaluate": hyp["max_evaluate_calls"]})
-    tools = ExploreTools(set(holdout.tolist()), baseline).tools() + session.tools()
+    tools = explore.tools() + session.tools()
     run_agent(client, PROMPT, task_message(baseline, hyp), tools, budget, trace, MAX_TURNS, session.stop_reason)
     summary = session.summary() | {"agent_spend_usd": round(budget.spent_usd, 4), "trace": str(trace_path),
                                    "warden_trace": str(warden_trace)}

@@ -46,5 +46,14 @@
         "at": "2026-09-14T22:30:56+00:00"
       }
     ]
+  },
+  "f_4c16dd8fe5": {
+    "feature_id": "f_4c16dd8fe5",
+    "name": "late_branch_l1s24_f1158",
+    "hypothesis": "A small branch or bypass around a late L1 station would create a sharp binary split: parts that pass through that special station likely followed a particular rework/inspection path and may have very different failure rates.",
+    "sql": "SELECT Id, CASE WHEN L1_S24_D1158 IS NOT NULL THEN 1 ELSE 0 END AS late_branch_l1s24_f1158 FROM parts_numeric",
+    "proposed_by": "hypothesis_agent",
+    "status": "proposed",
+    "findings": []
   }
 }

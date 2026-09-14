@@ -87,3 +87,15 @@ def test_stop_hook_ends_the_loop(tmp_path):
                       should_stop=lambda: "enough" if state["n"] >= 2 else None)
     kinds = [e["event"] for e in events(tmp_path / "t.jsonl")]
     assert state["n"] == 2 and kinds[-1] == "agent_end"
+
+
+def test_tool_exception_is_traced_and_the_loop_continues(tmp_path):
+    def boom(_):
+        raise KeyError("column missing")
+
+    tools = [Tool("boom", "fails", EchoInput, boom)]
+    client = ScriptedClient([Completion("", [call("boom", {"text": "x"})], 1, 1), Completion("recovered", [], 1, 1)])
+    trace = TraceWriter(tmp_path / "t.jsonl")
+    assert runtime.run_agent(client, "sys", "go", tools, Budget(max_usd=1.0), trace, max_turns=5) == "recovered"
+    assert "tool_error" in [e["event"] for e in events(tmp_path / "t.jsonl")]
+    assert "tool failed" in client.seen[1][-1]["content"]

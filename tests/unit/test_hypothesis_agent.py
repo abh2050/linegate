@@ -120,3 +120,31 @@ def test_gate_check_reports_each_requirement():
     assert any("improved" in p for p in problems) and any("holdout_runs" in p for p in problems)
     ok = {"improving_approved_features": ["f_x"], "survival_rate": 0.5, "holdout_ids_referenced": 0}
     assert hypothesis_agent.gate_problems(ok, trace_complete=True, holdout_runs_unchanged=True) == []
+
+
+def test_sql_that_does_not_run_is_refused_before_registration(tmp_path):
+    from linegate.features.sandbox import FeatureSQLError
+
+    def dry_run(sql):
+        raise FeatureSQLError("Referenced column not found")
+
+    reg = FeatureRegistry(tmp_path / "reg.json")
+    session = SearchSession(reg, reviewer_for(reg, {}), FakeScorer([]), BASELINE, CFG,
+                            TraceWriter(tmp_path / "t.jsonl"), holdout_ids=set(), dry_run=dry_run)
+    with pytest.raises(ToolRefused, match="not found"):
+        propose(session, "bad")
+    assert reg.records == {}
+
+
+def test_explore_dry_run_catches_binder_errors(tmp_path):
+    from linegate.features.sandbox import FeatureSQLError
+    from tests.unit.conftest_catalog import build_layout
+
+    layout = build_layout(tmp_path)
+    explore = hypothesis_agent.ExploreTools.__new__(hypothesis_agent.ExploreTools)
+    explore.parquet_dir = layout
+    explore.dry_run("SELECT Id, L0_S0_F0 AS x FROM parts_numeric")
+    with pytest.raises(FeatureSQLError, match="does not run"):
+        explore.dry_run("SELECT Id, L9_S99_D1 AS x FROM parts_date")
+    with pytest.raises(FeatureSQLError, match="Id"):
+        explore.dry_run("SELECT L0_S0_F0 AS x FROM parts_numeric")
