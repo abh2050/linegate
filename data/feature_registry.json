@@ -135,5 +135,149 @@
         "at": "2026-09-14T22:58:36+00:00"
       }
     ]
+  },
+  "f_7467768921": {
+    "feature_id": "f_7467768921",
+    "name": "l3s32_branch_mode_flags",
+    "hypothesis": "Some parts appear to enter a special path at station L3_S32 and skip the normal L3_S33 flow. That looks like a rework or alternate tooling branch, and discrete machine-mode values at S32 sharply separate very bad branch states from the main path.",
+    "sql": "SELECT\n  d.Id,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NULL THEN 1 ELSE 0 END AS l3s32_only_branch,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NOT NULL THEN 1 ELSE 0 END AS l3s32_to_s34_bypass,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NOT NULL AND d.L3_S34_D3875 IS NOT NULL THEN 1 ELSE 0 END AS l3_main_32_33_34,\n  CASE WHEN c.L3_S32_F3854 IS NOT NULL THEN 1 ELSE 0 END AS l3s32_f3854_present,\n  CASE WHEN try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) IN (2,4) THEN 1 ELSE 0 END AS l3s32_f3854_highrisk,\n  CASE WHEN try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) = 16 THEN 1 ELSE 0 END AS l3s32_f3854_midrisk,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) IN (2,4) THEN 1 ELSE 0 END AS l3s32_only_highrisk_mode,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NOT NULL AND try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) = 16 THEN 1 ELSE 0 END AS l3s32_s34_midrisk_mode\nFROM parts_date d\nJOIN parts_categorical c USING (Id)",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id shuffle collapse = 0.0 (< 0.6), strict time refit retention = 1.1573 (>= 0.5), and row scope mismatch share = 0.0. The feature survived all three production-line checks. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0929 -> 0.0929 (collapse 0%); strict time refit: retention 116% (time lift 0.0929, random lift 0.0803)",
+        "at": "2026-09-14T23:00:57+00:00"
+      }
+    ]
+  },
+  "f_c59411e051": {
+    "feature_id": "f_c59411e051",
+    "name": "l3s32_mode_code",
+    "hypothesis": "The parsed categorical code at L3_S32 behaves like a machine recipe or fixture state. A compact numeric code and coarse risk bucket may let the model isolate the bad alternate settings on this rare branch.",
+    "sql": "SELECT\n  c.Id,\n  try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) AS l3s32_f3854_code,\n  CASE \n    WHEN try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) IN (2,4) THEN 3\n    WHEN try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) = 16 THEN 2\n    WHEN try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) IN (8,256,1,1152,-2147483648) THEN 1\n    WHEN c.L3_S32_F3854 IS NULL THEN 0\n    ELSE -1 END AS l3s32_f3854_risk_bucket\nFROM parts_categorical c",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id shuffle collapse was 0.0 (< 0.6), strict time refit retention was 1.1194 (>= 0.5), and row scope check had 0 mismatched of 355038 rows (0.0 mismatch share). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0904 -> 0.0904 (collapse 0%); strict time refit: retention 112% (time lift 0.0904, random lift 0.0808)",
+        "at": "2026-09-14T23:01:04+00:00"
+      }
+    ]
+  },
+  "f_7196b8b164": {
+    "feature_id": "f_7196b8b164",
+    "name": "l3s32_f3851_presence_route",
+    "hypothesis": "The companion categorical field at L3_S32 seems tied to the same alternate operation. Its presence together with skipping S33 may indicate the exact rework fixture or manual intervention branch that creates many failures.",
+    "sql": "SELECT\n  d.Id,\n  CASE WHEN c.L3_S32_F3851 IS NOT NULL THEN 1 ELSE 0 END AS l3s32_f3851_present,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND c.L3_S32_F3851 IS NOT NULL THEN 1 ELSE 0 END AS l3s32_only_f3851_present,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND try_cast(substr(c.L3_S32_F3851,2) AS BIGINT) = 1 THEN 1 ELSE 0 END AS l3s32_only_f3851_eq1\nFROM parts_date d\nJOIN parts_categorical c USING (Id)",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: row scope check mismatch_share=0.0, Id shuffle collapse=0.0, and strict time refit retention=1.2043. No quarantine rule triggered. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0954 -> 0.0954 (collapse 0%); strict time refit: retention 120% (time lift 0.0954, random lift 0.0792)",
+        "at": "2026-09-14T23:01:12+00:00"
+      }
+    ]
+  },
+  "f_21889b84c3": {
+    "feature_id": "f_21889b84c3",
+    "name": "l3s32_downstream_split",
+    "hypothesis": "After entering the abnormal L3_S32 branch, parts appear to continue through one of two alternate downstream cells, each with very high defect rates. These indicators capture a physical bypass/rework path and which downstream branch processed the part.",
+    "sql": "SELECT\n  d.Id,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NULL AND d.L3_S35_D3886 IS NOT NULL AND d.L3_S36_D3919 IS NULL THEN 1 ELSE 0 END AS l3s32_bad_branch_s35,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NULL AND d.L3_S35_D3886 IS NULL AND d.L3_S36_D3919 IS NOT NULL THEN 1 ELSE 0 END AS l3s32_bad_branch_s36,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NOT NULL AND d.L3_S35_D3886 IS NOT NULL AND d.L3_S36_D3919 IS NULL THEN 1 ELSE 0 END AS l3s32_bypass_s34_s35,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NOT NULL AND d.L3_S35_D3886 IS NULL AND d.L3_S36_D3919 IS NOT NULL THEN 1 ELSE 0 END AS l3s32_bypass_s34_s36\nFROM parts_date d",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id shuffle collapse=0.0000 (<0.6), strict time refit retention=1.1670 (>=0.5), and row scope mismatch share=0.0000 (no row scope mismatch). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0943 -> 0.0943 (collapse 0%); strict time refit: retention 117% (time lift 0.0943, random lift 0.0808)",
+        "at": "2026-09-14T23:02:35+00:00"
+      }
+    ]
+  },
+  "f_f2b808c0a7": {
+    "feature_id": "f_f2b808c0a7",
+    "name": "l3s32_mode_measure_band",
+    "hypothesis": "A faulty alternate tooling mode at L3_S32 should not only change route but also produce a characteristic near-zero measurement band. Joint mode-and-measurement-band flags capture that malfunction signature on the abnormal branch.",
+    "sql": "SELECT\n  n.Id,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) IN (2,4) AND n.L3_S32_F3850 < 0 THEN 1 ELSE 0 END AS l3s32_only_mode24_neg,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) IN (2,4) AND n.L3_S32_F3850 >= 0 AND n.L3_S32_F3850 < 0.01 THEN 1 ELSE 0 END AS l3s32_only_mode24_near0,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) = 16 AND n.L3_S32_F3850 < 0.01 THEN 1 ELSE 0 END AS l3s32_only_mode16_near0,\n  CASE WHEN d.L3_S32_D3852 IS NOT NULL AND d.L3_S33_D3856 IS NULL AND d.L3_S34_D3875 IS NOT NULL AND try_cast(substr(c.L3_S32_F3854,2) AS BIGINT) = 16 AND n.L3_S32_F3850 < 0.01 THEN 1 ELSE 0 END AS l3s32_bypass16_near0\nFROM parts_numeric n\nJOIN parts_date d USING (Id)\nJOIN parts_categorical c USING (Id)",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id shuffle collapse = 0.0 (< 0.6), strict time refit retention = 1.2253836214041856 (>= 0.5), and row scope mismatch share = 0.0. All three required tests passed. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0578 -> 0.0578 (collapse 0%); strict time refit: retention 123% (time lift 0.0578, random lift 0.0471)",
+        "at": "2026-09-14T23:02:43+00:00"
+      }
+    ]
+  },
+  "f_91a2490d45": {
+    "feature_id": "f_91a2490d45",
+    "name": "crossline_l3_source_mix",
+    "hypothesis": "The same downstream line can receive parts from different upstream line families, and alternative sourcing may carry different defect risk. These flags capture whether L3 is fed without L0 and whether L1 or L2 are present as the upstream source mix.",
+    "sql": "SELECT\n  d.Id,\n  CASE WHEN d.L3_S29_D3316 IS NOT NULL THEN 1 ELSE 0 END AS has_l3,\n  CASE WHEN d.L0_S0_D1 IS NOT NULL THEN 1 ELSE 0 END AS has_l0,\n  CASE WHEN d.L1_S24_D677 IS NOT NULL THEN 1 ELSE 0 END AS has_l1,\n  CASE WHEN d.L2_S26_D3037 IS NOT NULL THEN 1 ELSE 0 END AS has_l2,\n  CASE WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL THEN 1 ELSE 0 END AS l3_without_l0,\n  CASE WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL AND d.L1_S24_D677 IS NOT NULL THEN 1 ELSE 0 END AS l3_from_l1_not_l0,\n  CASE WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL AND d.L2_S26_D3037 IS NOT NULL THEN 1 ELSE 0 END AS l3_from_l2_not_l0,\n  CASE WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL AND d.L1_S24_D677 IS NOT NULL AND d.L2_S26_D3037 IS NULL THEN 1 ELSE 0 END AS l3_l1_only_source,\n  CASE WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL AND d.L2_S26_D3037 IS NOT NULL AND d.L1_S24_D677 IS NULL THEN 1 ELSE 0 END AS l3_l2_only_source\nFROM parts_date d",
+    "proposed_by": "hypothesis_agent",
+    "status": "quarantined",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "quarantined",
+        "finding": "Quarantine: strict_time_refit retention was 0.0 (< 0.5), even though id_shuffle_test collapse was 0.0 and row_scope_check mismatch_share was 0.0. The time-refit result shows no retained predictive value under strict temporal validation. | Evidence: strict time refit: kept 0% of random-split lift (< 50%)",
+        "at": "2026-09-14T23:04:41+00:00"
+      }
+    ]
+  },
+  "f_e0c6dbb348": {
+    "feature_id": "f_e0c6dbb348",
+    "name": "crossline_source_code",
+    "hypothesis": "If alternative upstream sourcing into L3 reflects a distinct physical build path, a compact source-combination code may let the model split backup or hybrid routing from the main flow better than separate per-line spans.",
+    "sql": "SELECT\n  d.Id,\n  (CASE WHEN d.L0_S0_D1 IS NOT NULL THEN 1 ELSE 0 END) +\n  2*(CASE WHEN d.L1_S24_D677 IS NOT NULL THEN 1 ELSE 0 END) +\n  4*(CASE WHEN d.L2_S26_D3037 IS NOT NULL THEN 1 ELSE 0 END) +\n  8*(CASE WHEN d.L3_S29_D3316 IS NOT NULL THEN 1 ELSE 0 END) AS line_presence_code,\n  CASE \n    WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL AND d.L1_S24_D677 IS NOT NULL AND d.L2_S26_D3037 IS NULL THEN 3\n    WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL AND d.L2_S26_D3037 IS NOT NULL AND d.L1_S24_D677 IS NULL THEN 2\n    WHEN d.L3_S29_D3316 IS NOT NULL AND d.L0_S0_D1 IS NULL AND d.L1_S24_D677 IS NOT NULL AND d.L2_S26_D3037 IS NOT NULL THEN 1\n    ELSE 0 END AS l3_alt_source_bucket\nFROM parts_date d",
+    "proposed_by": "hypothesis_agent",
+    "status": "quarantined",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "quarantined",
+        "finding": "Quarantine: strict time refit retention is 0.0 (< 0.5), driven by time_lift 0.0 vs random_lift 0.043290263075224655. Row scope check passed with mismatch_share 0.0, and Id shuffle collapse is 0.0, but the strict time refit result fails the live-line requirement. | Evidence: strict time refit: kept 0% of random-split lift (< 50%)",
+        "at": "2026-09-14T23:04:50+00:00"
+      }
+    ]
+  },
+  "f_8ff7a1284e": {
+    "feature_id": "f_8ff7a1284e",
+    "name": "l3s33s34_mean_shift",
+    "hypothesis": "A small calibration mismatch between adjacent L3 stations would cause the average reading at S34 to be systematically shifted from S33. This feature captures that handoff bias and coarse shift regimes on the main high-volume path.",
+    "sql": "SELECT\n  n.Id,\n  ((n.L3_S34_F3876 + n.L3_S34_F3878 + n.L3_S34_F3880 + n.L3_S34_F3882) / 4.0) - ((n.L3_S33_F3855 + n.L3_S33_F3857 + n.L3_S33_F3859) / 3.0) AS l3s33s34_mean_shift,\n  CASE WHEN d.L3_S33_D3856 IS NOT NULL AND d.L3_S34_D3875 IS NOT NULL AND (((n.L3_S34_F3876 + n.L3_S34_F3878 + n.L3_S34_F3880 + n.L3_S34_F3882) / 4.0) - ((n.L3_S33_F3855 + n.L3_S33_F3857 + n.L3_S33_F3859) / 3.0)) < -0.05 THEN 1 ELSE 0 END AS l3s33s34_shift_lt_m005,\n  CASE WHEN d.L3_S33_D3856 IS NOT NULL AND d.L3_S34_D3875 IS NOT NULL AND (((n.L3_S34_F3876 + n.L3_S34_F3878 + n.L3_S34_F3880 + n.L3_S34_F3882) / 4.0) - ((n.L3_S33_F3855 + n.L3_S33_F3857 + n.L3_S33_F3859) / 3.0)) >= -0.01 AND (((n.L3_S34_F3876 + n.L3_S34_F3878 + n.L3_S34_F3880 + n.L3_S34_F3882) / 4.0) - ((n.L3_S33_F3855 + n.L3_S33_F3857 + n.L3_S33_F3859) / 3.0)) < 0.01 THEN 1 ELSE 0 END AS l3s33s34_shift_near0,\n  CASE WHEN d.L3_S33_D3856 IS NOT NULL AND d.L3_S34_D3875 IS NOT NULL AND (((n.L3_S34_F3876 + n.L3_S34_F3878 + n.L3_S34_F3880 + n.L3_S34_F3882) / 4.0) - ((n.L3_S33_F3855 + n.L3_S33_F3857 + n.L3_S33_F3859) / 3.0)) >= 0.01 AND (((n.L3_S34_F3876 + n.L3_S34_F3878 + n.L3_S34_F3880 + n.L3_S34_F3882) / 4.0) - ((n.L3_S33_F3855 + n.L3_S33_F3857 + n.L3_S33_F3859) / 3.0)) < 0.05 THEN 1 ELSE 0 END AS l3s33s34_shift_p001_p005\nFROM parts_numeric n\nJOIN parts_date d USING (Id)",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id_shuffle_test collapse=0.0, strict_time_refit retention=1.1791373735893411, and row_scope_check mismatch_share=0.0. No quarantine thresholds were triggered. | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0795 -> 0.0795 (collapse 0%); strict time refit: retention 118% (time lift 0.0795, random lift 0.0675)",
+        "at": "2026-09-14T23:05:35+00:00"
+      }
+    ]
+  },
+  "f_d688cc3e5d": {
+    "feature_id": "f_d688cc3e5d",
+    "name": "l3s33s34_sign_balance",
+    "hypothesis": "A mis-set calibration regime can flip the sign pattern across several neighboring measurements together. Counting how many readings are negative across the S33-S34 block captures a coordinated station-state that simple per-station minima may miss.",
+    "sql": "SELECT\n  n.Id,\n  (CASE WHEN n.L3_S33_F3855 < 0 THEN 1 ELSE 0 END +\n   CASE WHEN n.L3_S33_F3857 < 0 THEN 1 ELSE 0 END +\n   CASE WHEN n.L3_S33_F3859 < 0 THEN 1 ELSE 0 END +\n   CASE WHEN n.L3_S34_F3876 < 0 THEN 1 ELSE 0 END +\n   CASE WHEN n.L3_S34_F3878 < 0 THEN 1 ELSE 0 END) AS l3s33s34_neg_count,\n  CASE WHEN (CASE WHEN n.L3_S33_F3855 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S33_F3857 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S33_F3859 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S34_F3876 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S34_F3878 < 0 THEN 1 ELSE 0 END) IN (2,3) THEN 1 ELSE 0 END AS l3s33s34_mid_neg,\n  CASE WHEN (CASE WHEN n.L3_S33_F3855 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S33_F3857 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S33_F3859 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S34_F3876 < 0 THEN 1 ELSE 0 END +\n             CASE WHEN n.L3_S34_F3878 < 0 THEN 1 ELSE 0 END) IN (1,4) THEN 1 ELSE 0 END AS l3s33s34_edge_neg\nFROM parts_numeric n",
+    "proposed_by": "hypothesis_agent",
+    "status": "approved",
+    "findings": [
+      {
+        "actor": "warden",
+        "status": "approved",
+        "finding": "Approved: id shuffle collapse = 0.0 (< 0.6), strict time refit retention = 1.15 (>= 0.5), and row scope mismatches = 0/355038 (0.0). | Evidence: row scope: 0 of 355,038 values changed; Id shuffle: lift 0.0722 -> 0.0722 (collapse 0%); strict time refit: retention 115% (time lift 0.0722, random lift 0.0628)",
+        "at": "2026-09-14T23:05:42+00:00"
+      }
+    ]
   }
 }
