@@ -6,3 +6,5 @@ __pycache__/
 .pytest_cache/
 node_modules/
 data/*.zip
+data/artifacts/
+logs/

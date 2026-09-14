@@ -1,6 +1,6 @@
 UV := uv run
 
-.PHONY: setup test data unpack manifest gate-0
+.PHONY: setup test data unpack manifest gate-0 gate-1 gate-1-bg gate-1-status
 
 setup:
 	uv sync
@@ -28,3 +28,20 @@ gate-0:
 	$(UV) python -m linegate.dataio.splits
 	$(UV) python scripts/seal_holdout.py
 	$(UV) python -m linegate.dataio.duck
+
+gate-1:
+	$(UV) pytest tests/unit -q
+	$(UV) python -m linegate.model.train
+
+# Detached run that survives the terminal and Claude session closing.
+# caffeinate keeps the Mac awake; the exit code lands in logs/gate-1.exit.
+gate-1-bg:
+	mkdir -p logs
+	rm -f logs/gate-1.exit
+	nohup caffeinate -i sh -c '$(MAKE) gate-1 > logs/gate-1.log 2>&1; echo $$? > logs/gate-1.exit' > /dev/null 2>&1 &
+	@echo "started; follow with: make gate-1-status"
+
+gate-1-status:
+	@if [ -f logs/gate-1.exit ]; then echo "finished, exit $$(cat logs/gate-1.exit)"; else echo "running"; fi
+	@grep -v VIRTUAL_ENV logs/gate-1.log | tail -15
+	@if [ -f data/artifacts/baseline/metrics.json ]; then head -20 data/artifacts/baseline/metrics.json; fi
