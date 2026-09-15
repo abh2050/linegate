@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "A feature proposal, end to end",
+    "viewBox": [
+      1040,
+      540
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "propose",
+        "label": "Guarded proposal",
+        "focus": [
+          "agent",
+          "guard",
+          "sandbox",
+          "registry"
+        ],
+        "note": "SQL is parsed and dry-run before anything is registered."
+      },
+      {
+        "id": "review",
+        "label": "Warden review",
+        "focus": [
+          "registry",
+          "warden",
+          "sandbox"
+        ],
+        "note": "Three leak tests, then a deterministic rule the model cannot override."
+      },
+      {
+        "id": "evaluate",
+        "label": "Noise-aware evaluation",
+        "focus": [
+          "agent",
+          "scorer",
+          "registry"
+        ],
+        "note": "Only approved features are scored, against a bar measured from placebo runs."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Hypothesis agent",
+      "sublabel": "LLM, tool calls"
+    },
+    {
+      "id": "guard",
+      "type": "security",
+      "label": "SQL guard",
+      "sublabel": "DuckDB parser"
+    },
+    {
+      "id": "sandbox",
+      "type": "database",
+      "label": "Split sandbox",
+      "sublabel": "one split, no labels"
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Feature registry",
+      "sublabel": "status + findings"
+    },
+    {
+      "id": "warden",
+      "type": "security",
+      "label": "Leakage warden",
+      "sublabel": "tests + rule"
+    },
+    {
+      "id": "scorer",
+      "type": "backend",
+      "label": "Ensemble scorer",
+      "sublabel": "3-seed LightGBM"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 242,
+      "label": "Propose"
+    },
+    {
+      "from": 254,
+      "to": 362,
+      "label": "Warden review"
+    },
+    {
+      "from": 374,
+      "to": 456,
+      "label": "Evaluate"
+    }
+  ],
+  "messages": [
+    {
+      "from": "agent",
+      "to": "guard",
+      "y": 174,
+      "label": "propose_feature",
+      "variant": "emphasis"
+    },
+    {
+      "from": "guard",
+      "to": "sandbox",
+      "y": 202,
+      "label": "dry-run LIMIT 0",
+      "variant": "default"
+    },
+    {
+      "from": "guard",
+      "to": "registry",
+      "y": 230,
+      "label": "register hypothesis + SQL",
+      "variant": "emphasis"
+    },
+    {
+      "from": "registry",
+      "to": "warden",
+      "y": 266,
+      "label": "review feature",
+      "variant": "emphasis"
+    },
+    {
+      "from": "warden",
+      "to": "sandbox",
+      "y": 294,
+      "label": "shuffled Ids, half rows",
+      "variant": "default"
+    },
+    {
+      "from": "warden",
+      "to": "registry",
+      "y": 322,
+      "label": "approve or quarantine",
+      "variant": "security"
+    },
+    {
+      "from": "registry",
+      "to": "agent",
+      "y": 350,
+      "label": "verdict + evidence",
+      "variant": "return"
+    },
+    {
+      "from": "agent",
+      "to": "scorer",
+      "y": 388,
+      "label": "evaluate(feature_ids)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "scorer",
+      "to": "registry",
+      "y": 416,
+      "label": "approved only",
+      "variant": "security"
+    },
+    {
+      "from": "scorer",
+      "to": "agent",
+      "y": 444,
+      "label": "MCC + AP vs noise bar",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "guard",
+      "from": 168,
+      "to": 236,
+      "type": "security"
+    },
+    {
+      "participant": "registry",
+      "from": 224,
+      "to": 356,
+      "type": "database"
+    },
+    {
+      "participant": "warden",
+      "from": 260,
+      "to": 328,
+      "type": "security"
+    },
+    {
+      "participant": "scorer",
+      "from": 382,
+      "to": 450,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Before registration",
+      "items": [
+        "One SELECT over sandbox views only",
+        "No windows, no labels, no holdout Id literals"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Warden veto",
+      "items": [
+        "Row scope, Id shuffle, strict time refit",
+        "Stricter of model and rule wins; quarantine is final"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Beat the noise",
+      "items": [
+        "Bar = best + 2 placebo SDs on MCC and AP",
+        "Three failed evaluations end the search"
+      ]
+    }
+  ]
+}

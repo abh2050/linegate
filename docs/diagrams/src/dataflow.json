@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "From raw sensor files to priced decisions",
+    "viewBox": [
+      1080,
+      520
+    ],
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "contract",
+        "label": "Data contract",
+        "focus": [
+          "zips",
+          "parquet",
+          "split",
+          "holdout"
+        ],
+        "note": "Hash-verified files, proven row counts, a time-ordered split, and a holdout sealed before any model exists."
+      },
+      {
+        "id": "decisions",
+        "label": "Model to decision",
+        "focus": [
+          "features",
+          "model",
+          "policy",
+          "console"
+        ],
+        "note": "Scores become dollars per shift; the uncertain band goes to people."
+      },
+      {
+        "id": "feedback",
+        "label": "Feedback and proof",
+        "focus": [
+          "console",
+          "labels",
+          "holdout",
+          "scorecard"
+        ],
+        "note": "Reviewer labels are stored for retraining; the holdout is scored exactly once."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "Sources"
+    },
+    {
+      "label": "Contract"
+    },
+    {
+      "label": "Features"
+    },
+    {
+      "label": "Model + policy"
+    },
+    {
+      "label": "Decide + prove"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "zips",
+      "type": "external",
+      "label": "Kaggle zips",
+      "sublabel": "1.18M parts",
+      "stage": 0,
+      "row": 0,
+      "tag": "4,264 columns"
+    },
+    {
+      "id": "parquet",
+      "type": "database",
+      "label": "Verified Parquet",
+      "sublabel": "rows round-trip",
+      "stage": 1,
+      "row": 0,
+      "tag": "sha256"
+    },
+    {
+      "id": "split",
+      "type": "security",
+      "label": "Time split",
+      "sublabel": "first timestamp",
+      "stage": 1,
+      "row": 1,
+      "tag": "60 / 20 / 20"
+    },
+    {
+      "id": "features",
+      "type": "database",
+      "label": "baseline_v2",
+      "sublabel": "route, timing, codes",
+      "stage": 2,
+      "row": 0,
+      "tag": "445 columns"
+    },
+    {
+      "id": "holdout",
+      "type": "security",
+      "label": "Sealed holdout",
+      "sublabel": "latest 20%",
+      "stage": 2,
+      "row": 1,
+      "tag": "hash lock"
+    },
+    {
+      "id": "model",
+      "type": "backend",
+      "label": "LightGBM",
+      "sublabel": "3-seed ensemble",
+      "stage": 3,
+      "row": 0,
+      "tag": "val MCC 0.227"
+    },
+    {
+      "id": "policy",
+      "type": "backend",
+      "label": "Cost policy",
+      "sublabel": "$ per shift",
+      "stage": 3,
+      "row": 1,
+      "tag": "band 0.008-0.258"
+    },
+    {
+      "id": "console",
+      "type": "frontend",
+      "label": "Review console",
+      "sublabel": "abstain queue",
+      "stage": 4,
+      "row": 0,
+      "tag": "keyboard"
+    },
+    {
+      "id": "labels",
+      "type": "database",
+      "label": "Confirmed labels",
+      "sublabel": "ship 0, scrap 1",
+      "stage": 4,
+      "row": 1,
+      "tag": "jsonl"
+    },
+    {
+      "id": "scorecard",
+      "type": "backend",
+      "label": "Scorecard",
+      "sublabel": "holdout MCC 0.110",
+      "stage": 4,
+      "row": 2,
+      "tag": "runs = 1"
+    }
+  ],
+  "flows": [
+    {
+      "id": "verify",
+      "from": "zips",
+      "to": "parquet",
+      "label": "verified CSV",
+      "variant": "emphasis"
+    },
+    {
+      "id": "order",
+      "from": "parquet",
+      "to": "split",
+      "label": "min timestamp",
+      "variant": "default",
+      "labelAt": [
+        315,
+        214
+      ]
+    },
+    {
+      "id": "build",
+      "from": "parquet",
+      "to": "features",
+      "label": "train + validation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "seal",
+      "from": "split",
+      "to": "holdout",
+      "label": "latest 20%",
+      "variant": "security"
+    },
+    {
+      "id": "fit",
+      "from": "features",
+      "to": "model",
+      "label": "feature matrix",
+      "variant": "emphasis"
+    },
+    {
+      "id": "price",
+      "from": "model",
+      "to": "policy",
+      "label": "validation scores",
+      "variant": "emphasis",
+      "labelAt": [
+        745,
+        214
+      ]
+    },
+    {
+      "id": "queue",
+      "from": "policy",
+      "to": "console",
+      "label": "abstain band",
+      "variant": "emphasis"
+    },
+    {
+      "id": "confirm",
+      "from": "console",
+      "to": "labels",
+      "label": "engineer decisions",
+      "variant": "default",
+      "labelAt": [
+        960,
+        214
+      ]
+    },
+    {
+      "id": "prove",
+      "from": "holdout",
+      "to": "scorecard",
+      "label": "scored once",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          530,
+          385
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Contract first",
+      "items": [
+        "Every raw load verifies sha256 against the manifest",
+        "Holdout sealed by hash before training begins"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Dollars, not accuracy",
+      "items": [
+        "Inspect $6.50, scrap $42, field failure $1,850",
+        "Policy saves ~$2,090 per shift on the holdout"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Honest proof",
+      "items": [
+        "Holdout MCC 0.110 vs validation 0.227",
+        "Reported beside the leaky 0.49 it refuses"
+      ]
+    }
+  ]
+}

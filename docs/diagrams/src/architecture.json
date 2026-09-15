@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "linegate system architecture",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "decision-path",
+        "label": "Decision path",
+        "focus": [
+          "kaggle",
+          "dataio",
+          "parquet",
+          "trainer",
+          "policy",
+          "console"
+        ],
+        "note": "Verified raw data becomes a LightGBM score, a dollar-priced policy, and a human review queue."
+      },
+      {
+        "id": "agent-guardrails",
+        "label": "Agent guardrails",
+        "focus": [
+          "search",
+          "warden",
+          "parquet",
+          "trainer"
+        ],
+        "note": "Agents propose; code-enforced tests decide. The warden veto cannot be overridden."
+      },
+      {
+        "id": "human-loop",
+        "label": "Human loop",
+        "focus": [
+          "policy",
+          "watcher",
+          "console",
+          "disposition",
+          "labels"
+        ],
+        "note": "Cost changes arrive as pull requests; reviewers confirm labels that feed retraining."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "kaggle",
+      "type": "external",
+      "label": "Kaggle bundle",
+      "sublabel": "6 raw CSV zips",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "dataio",
+      "type": "security",
+      "label": "Data contract",
+      "sublabel": "sha256 + row counts",
+      "pos": [
+        240,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "parquet",
+      "type": "database",
+      "label": "Parquet + DuckDB",
+      "sublabel": "time-ordered split",
+      "pos": [
+        450,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "trainer",
+      "type": "backend",
+      "label": "LightGBM ensemble",
+      "sublabel": "3 seeds, 445 features",
+      "pos": [
+        660,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "no LLM scores"
+    },
+    {
+      "id": "policy",
+      "type": "backend",
+      "label": "Cost policy",
+      "sublabel": "$ per shift curve",
+      "pos": [
+        870,
+        300
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "console",
+      "type": "frontend",
+      "label": "Review console",
+      "sublabel": "FastAPI + React",
+      "pos": [
+        1070,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "search",
+      "type": "backend",
+      "label": "Hypothesis agent",
+      "sublabel": "sandboxed SQL",
+      "pos": [
+        450,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "warden",
+      "type": "security",
+      "label": "Leakage warden",
+      "sublabel": "3 leak tests + rule",
+      "pos": [
+        660,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "veto"
+    },
+    {
+      "id": "watcher",
+      "type": "backend",
+      "label": "Policy watcher",
+      "sublabel": "opens PRs, never merges",
+      "pos": [
+        870,
+        110
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "disposition",
+      "type": "backend",
+      "label": "Disposition agent",
+      "sublabel": "cited write-ups",
+      "pos": [
+        1070,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "holdout",
+      "type": "security",
+      "label": "Sealed holdout",
+      "sublabel": "scored exactly once",
+      "pos": [
+        450,
+        490
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "labels",
+      "type": "database",
+      "label": "Confirmed labels",
+      "sublabel": "training-label store",
+      "pos": [
+        1070,
+        490
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ingest",
+      "from": "kaggle",
+      "to": "dataio",
+      "label": "verify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "convert",
+      "from": "dataio",
+      "to": "parquet",
+      "label": "convert",
+      "variant": "emphasis"
+    },
+    {
+      "id": "train",
+      "from": "parquet",
+      "to": "trainer",
+      "label": "features",
+      "variant": "emphasis"
+    },
+    {
+      "id": "score",
+      "from": "trainer",
+      "to": "policy",
+      "label": "scores",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route",
+      "from": "policy",
+      "to": "console",
+      "label": "review band",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sandbox",
+      "from": "search",
+      "to": "parquet",
+      "label": "one split, no labels",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        525,
+        237
+      ]
+    },
+    {
+      "id": "propose",
+      "from": "search",
+      "to": "warden",
+      "label": "propose"
+    },
+    {
+      "id": "approve",
+      "from": "warden",
+      "to": "trainer",
+      "label": "approved only",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        735,
+        237
+      ]
+    },
+    {
+      "id": "memo-pr",
+      "from": "watcher",
+      "to": "policy",
+      "label": "PR",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "writeup",
+      "from": "disposition",
+      "to": "console",
+      "label": "validated",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1145,
+        237
+      ]
+    },
+    {
+      "id": "seal",
+      "from": "parquet",
+      "to": "holdout",
+      "label": "seal 20%",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        525,
+        427
+      ]
+    },
+    {
+      "id": "confirm",
+      "from": "console",
+      "to": "labels",
+      "label": "decisions",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1145,
+        427
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Honest model",
+      "items": [
+        "Time-ordered split, holdout scored once",
+        "Leak features quarantined, MCC tripwire at 0.40"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Priced decisions",
+      "items": [
+        "Exact confusion matrix at 1,001 thresholds",
+        "Abstain band routes uncertain parts to people"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Boxed-in agents",
+      "items": [
+        "Schema-validated tools, budgets, full traces",
+        "Citations checked server-side; merges refused"
+      ]
+    }
+  ]
+}

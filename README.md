@@ -1,9 +1,55 @@
+<div align="center">
+
+<img src="https://storage.googleapis.com/kaggle-media/competitions/kaggle/5357/media/BoschManufacturingKaggleImage.jpg" alt="Bosch production line" width="100%" />
+
 # linegate
 
-Predict quality failures on the Bosch production line, price every decision in
-dollars, and route the uncertain parts to a human.
+### Honest failure prediction on a real production line, priced in dollars, with the uncertain parts routed to a human.
 
-![Bosch production line](https://storage.googleapis.com/kaggle-media/competitions/kaggle/5357/media/BoschManufacturingKaggleImage.jpg)
+<p>
+<img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white" />
+<img alt="LightGBM" src="https://img.shields.io/badge/model-LightGBM-2f5bea" />
+<img alt="DuckDB" src="https://img.shields.io/badge/data-DuckDB%20%2B%20Parquet-FFF000?logo=duckdb&logoColor=black" />
+<img alt="FastAPI" src="https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white" />
+<img alt="React" src="https://img.shields.io/badge/UI-React-61DAFB?logo=react&logoColor=black" />
+<img alt="Tests" src="https://img.shields.io/badge/tests-175%20unit%20%2B%203%20e2e-12805c" />
+<img alt="Holdout" src="https://img.shields.io/badge/holdout-scored%20once-c2362b" />
+</p>
+
+**[Interactive diagrams](https://abh2050.github.io/linegate/)** ·
+**[Scorecard](docs/scorecard.md)** ·
+**[Architecture decisions](docs/decisions/)** ·
+**[Screenshots](#screenshots)**
+
+</div>
+
+<br />
+
+| **1.18M** parts | **$2,090** saved per shift | **9** features quarantined | **0 of 6** fabricated citations |
+|:---:|:---:|:---:|:---:|
+| 4,264 sensor, timing, and categorical columns | on the sealed holdout vs shipping everything | including the Id-ordering leak behind the 2016 leaderboard | agent write-ups citing evidence the tools never returned |
+
+## In 30 seconds
+
+- **The problem.** A missed defect costs $1,850 in the field; an inspection costs $6.50. The goal is not model accuracy but the cheapest ship, inspect, or review decision for every part, every shift.
+- **The approach.** A time-ordered LightGBM ensemble feeds a cost curve built from exact confusion matrices. Parts the policy cannot decide confidently go to an engineer's review queue.
+- **The integrity bar.** The 2016 leaderboard reached MCC 0.49 through a row-order leak no factory could use. linegate refuses it, seals a holdout before training, scores it exactly once, and publishes the honest 0.110 beside validation's 0.227.
+- **The agents.** LLM agents search for features, explain parts, and watch cost memos, but code decides: schema-validated tools, a leakage warden with a deterministic veto, server-side citation checks, and no permission to merge.
+
+**What this demonstrates:** production ML judgment (leakage, drift, noise-aware evaluation), cost-sensitive decision design, guardrailed agent engineering, and full-stack delivery from data contract to reviewer UI, with every milestone behind a passing test gate.
+
+## System at a glance
+
+<p align="center">
+  <a href="https://abh2050.github.io/linegate/#architecture"><img src="docs/diagrams/img/architecture.png" alt="linegate system architecture" width="100%" /></a>
+</p>
+
+| [Feature proposal, end to end](https://abh2050.github.io/linegate/#sequence) | [From raw files to priced decisions](https://abh2050.github.io/linegate/#dataflow) |
+|:---:|:---:|
+| <a href="https://abh2050.github.io/linegate/#sequence"><img src="docs/diagrams/img/sequence.png" alt="Feature proposal sequence" /></a> | <a href="https://abh2050.github.io/linegate/#dataflow"><img src="docs/diagrams/img/dataflow.png" alt="Data flow" /></a> |
+| SQL guard, sandbox, leakage warden, noise-aware scorer | Data contract, sealed holdout, model, policy, review |
+
+The interactive versions (pan, zoom, search, guided stories) live in [`docs/index.html`](docs/index.html), published at **https://abh2050.github.io/linegate/**. Diagram sources are in [`docs/diagrams/src/`](docs/diagrams/src/).
 
 ## The business problem
 
