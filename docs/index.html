@@ -3,79 +3,92 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>linegate · diagrams</title>
-  <meta name="description" content="Architecture, sequence, and data flow diagrams for linegate: honest failure prediction and dollar-priced decisions on the Bosch production line." />
+  <title>linegate — ML-powered manufacturing quality</title>
+  <meta name="description" content="Explore linegate: an end-to-end machine learning project connecting manufacturing quality predictions, cost-based decisions, and human review." />
   <style>
-    :root {
-      --bg: #f5f6f8; --panel: #ffffff; --fg: #14161b; --muted: #5f6878; --line: #e3e6ec;
-      --accent: #2f5bea; --accent-2: #7c5cff; --good: #12805c; --bad: #c2362b;
-      --radius: 14px; --shadow: 0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.06);
-    }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg: #0e1014; --panel: #161920; --fg: #e7e9ee; --muted: #8d95a7; --line: #262a33;
-        --accent: #6b8cff; --accent-2: #a18bff; --good: #3fbf8a; --bad: #f06b5f; --shadow: 0 1px 2px rgba(0,0,0,.5); }
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 72px; }
-    body { margin: 0; background: var(--bg); color: var(--fg);
-      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    .nav { position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(1.4) blur(10px);
-      background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--line); }
-    .nav-inner { max-width: 1320px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; color: var(--fg); }
-    .logo { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
-    .nav-links { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
-    .nav-links a { color: var(--muted); padding: 6px 12px; border-radius: 999px; font-size: 14px; font-weight: 500; }
-    .nav-links a:hover { text-decoration: none; background: var(--panel); color: var(--fg); }
-    .nav-links a.active { background: var(--fg); color: var(--bg); }
-
-    .hero { max-width: 1320px; margin: 0 auto; padding: 56px 24px 28px; }
-    .eyebrow { text-transform: uppercase; letter-spacing: .1em; font-size: 12px; font-weight: 700; color: var(--accent); }
-    .hero h1 { font-size: clamp(30px, 4.4vw, 52px); line-height: 1.08; letter-spacing: -.025em; margin: 10px 0 14px; max-width: 22ch; }
-    .hero p.lead { font-size: 18px; color: var(--muted); max-width: 70ch; margin: 0; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
-    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
-    .stat b { display: block; font-size: 24px; letter-spacing: -.02em; }
-    .stat span { color: var(--muted); font-size: 13px; }
-    .jump { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
-    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 10px; background: var(--panel);
-      border: 1px solid var(--line); color: var(--fg); font-weight: 600; font-size: 14px; box-shadow: var(--shadow); }
-    .chip:hover { text-decoration: none; border-color: var(--accent); }
-    .chip i { font-style: normal; color: var(--muted); font-weight: 500; }
-
-    .diagram { max-width: 1320px; margin: 0 auto; padding: 28px 24px 12px; }
-    .diagram header { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
-    .diagram .num { font: 700 13px ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); }
-    .diagram h2 { margin: 4px 0 6px; font-size: 28px; letter-spacing: -.02em; }
-    .diagram p { margin: 0; color: var(--muted); max-width: 78ch; }
-    .actions { display: flex; gap: 8px; }
-    .btn { padding: 8px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font-size: 13px; font-weight: 600; white-space: nowrap; }
-    .btn:hover { text-decoration: none; border-color: var(--accent); }
-    .frame { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-    .frame iframe { display: block; width: 100%; height: min(920px, calc(100vh - 96px)); min-height: 640px; border: 0; background: var(--bg); }
-    .takeaways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
-    .takeaways div { border-left: 3px solid var(--accent); padding: 4px 12px; font-size: 14px; color: var(--muted); }
-    .takeaways strong { color: var(--fg); display: block; }
-
-    footer { max-width: 1320px; margin: 40px auto 0; padding: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px;
-      display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-
-    @media (max-width: 900px) {
-      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .takeaways { grid-template-columns: 1fr; }
-      .frame iframe { height: 78vh; min-height: 520px; }
-      .nav-links { margin-left: 0; }
-    }
+    :root { color-scheme: light dark; --bg:#f6f7fb; --panel:#fff; --fg:#182338; --muted:#58667c; --line:#dfe5ef; --accent:#345be4; --soft:#ebefff; --shadow:0 18px 60px #14264d0c; }
+    @media(prefers-color-scheme:dark) { :root { --bg:#0c1220; --panel:#131d30; --fg:#eef2ff; --muted:#a6b3ca; --line:#293650; --accent:#9cb2ff; --soft:#202f50; --shadow:0 18px 60px #0003; } }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:100px; }
+    body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    a:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
+    .skip { position:fixed; left:16px; top:-100px; padding:12px; background:var(--panel); z-index:100; }
+    .skip:focus { top:12px; }
+    .nav { position:sticky; top:0; z-index:10; background:var(--bg); border-bottom:1px solid var(--line); }
+    .nav-inner { max-width:1280px; margin:auto; padding:17px 32px; display:flex; align-items:center; gap:24px; }
+    .brand { display:flex; align-items:center; gap:10px; color:var(--fg); font-weight:750; font-size:21px; letter-spacing:-.7px; }
+    .logo { display:grid; place-items:center; width:32px; height:32px; border-radius:9px; background:#345be4; color:white; font-size:19px; }
+    .nav-links { margin-left:auto; display:flex; gap:5px; }
+    .nav-links a { padding:7px 12px; color:var(--muted); font-size:13px; font-weight:600; border-radius:7px; }
+    .nav-links a:hover,.nav-links a.active { color:var(--accent); background:var(--soft); text-decoration:none; }
+    .hero,.diagram,.product,.results { max-width:1280px; margin:auto; padding:64px 32px; }
+    .hero { padding-top:80px; padding-bottom:32px; }
+    .hero-grid { display:grid; grid-template-columns:1.15fr 1fr; gap:56px; align-items:center; }
+    .eyebrow,.num { color:var(--accent); font-size:11px; font-weight:750; text-transform:uppercase; letter-spacing:1.7px; }
+    .eyebrow { display:flex; align-items:center; gap:9px; }
+    .eyebrow:before { content:""; width:7px; height:7px; background:var(--accent); border-radius:50%; }
+    h1 { font-size:clamp(38px,4.5vw,62px); letter-spacing:-2.8px; line-height:1.07; margin:22px 0; max-width:15ch; }
+    h1 em { font-style:normal; color:var(--accent); }
+    .lead { color:var(--muted); font-size:17px; max-width:57ch; margin:0; }
+    .jump { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
+    .btn,.chip { display:inline-flex; align-items:center; justify-content:center; gap:16px; padding:11px 17px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--fg); font-size:13px; font-weight:650; }
+    .btn:hover,.chip:hover { border-color:var(--accent); text-decoration:none; }
+    .primary { background:#345be4; color:white; border-color:#345be4; }
+    .stack { display:flex; flex-wrap:wrap; gap:8px; margin-top:25px; }
+    .stack span { font-size:11px; color:var(--muted); padding:3px 9px; border:1px solid var(--line); border-radius:5px; }
+    .preview { padding:22px; border:1px solid var(--line); border-radius:20px; background:linear-gradient(145deg,var(--soft),var(--panel)); box-shadow:var(--shadow); }
+    .preview-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:22px; font-size:11px; font-weight:650; color:var(--muted); }
+    .status { color:var(--accent); background:var(--panel); padding:4px 9px; border-radius:20px; }
+    .preview img { width:100%; display:block; border-radius:8px; border:1px solid var(--line); }
+    .preview h2 { font-size:21px; margin:20px 0 5px; letter-spacing:-.6px; }
+    .preview p { margin:0; font-size:13px; color:var(--muted); }
+    .workflow { display:flex; gap:8px; align-items:center; margin-top:18px; font-size:11px; font-weight:650; color:var(--muted); }
+    .workflow span { padding:5px 10px; border-radius:5px; background:var(--panel); }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--line); background:var(--panel); border-radius:12px; margin-top:52px; overflow:hidden; }
+    .stat { padding:24px; border-right:1px solid var(--line); }
+    .stat:last-child { border:0; }
+    .stat b { display:block; font-size:30px; letter-spacing:-1px; line-height:1.3; }
+    .stat span { color:var(--muted); font-size:12px; }
+    .metric-note { font-size:11px; color:var(--muted); margin:10px 0 0; }
+    .section-intro { margin-bottom:26px; }
+    h2 { font-size:32px; line-height:1.2; letter-spacing:-1px; margin:10px 0 12px; }
+    .section-intro p,.diagram header p { color:var(--muted); margin:0; max-width:76ch; }
+    .product { padding-top:44px; padding-bottom:40px; }
+    .product-card { display:grid; grid-template-columns:1.6fr 1fr; border:1px solid var(--line); background:var(--panel); border-radius:16px; overflow:hidden; }
+    .product-image { padding:24px; background:var(--soft); display:flex; align-items:center; }
+    .product-image img { width:100%; height:auto; display:block; border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); }
+    .product-copy { padding:30px; }
+    .product-copy h3 { font-size:16px; margin:0 0 5px; }
+    .product-copy p { color:var(--muted); font-size:13px; margin:0 0 22px; }
+    .diagram { padding-top:48px; padding-bottom:24px; }
+    .diagram header { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:23px; }
+    .actions { flex-shrink:0; }
+    .frame { background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
+    .frame-bar { padding:11px 17px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:11px; }
+    .frame iframe { display:block; width:100%; height:min(820px,calc(100vh - 120px)); min-height:600px; border:0; background:var(--bg); }
+    .takeaways { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; margin-top:22px; }
+    .takeaways div { border-top:2px solid var(--line); padding:14px 0 0; color:var(--muted); font-size:13px; }
+    .takeaways strong { display:block; color:var(--fg); margin-bottom:4px; font-size:14px; }
+    .results { padding-top:48px; padding-bottom:40px; }
+    .results-inner { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:32px; display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+    .results p { font-size:14px; color:var(--muted); }
+    .result-row { display:flex; justify-content:space-between; gap:20px; padding:13px 0; border-bottom:1px solid var(--line); font-size:13px; }
+    .result-row strong { white-space:nowrap; }
+    footer { max-width:1216px; margin:20px auto 0; padding:26px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:20px; color:var(--muted); font-size:12px; }
+    @media(max-width:1000px) { .hero-grid { gap:28px; } .hero { padding-top:48px; } .product-copy { padding:22px; } .diagram header { flex-wrap:wrap; } footer { margin-inline:32px; } }
+    @media(max-width:760px) { .hero-grid,.product-card,.results-inner { grid-template-columns:1fr; } .hero,.diagram,.product,.results { padding:36px 20px; } .hero-grid { gap:32px; } h1 { max-width:18ch; font-size:46px; } .nav-inner { padding:12px 20px; flex-wrap:wrap; gap:8px; } .nav-links { width:100%; margin:0; overflow-x:auto; } .nav-links a { padding:6px 9px; white-space:nowrap; } html { scroll-padding-top:125px; } .stats { grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:32px; } .stat { padding:20px; } .stat:nth-child(2) { border-right:0; } .stat:nth-child(-n+2) { border-bottom:1px solid var(--line); } .takeaways { grid-template-columns:1fr; gap:12px; } .frame iframe { min-height:520px; height:72vh; } .frame-bar { flex-wrap:wrap; gap:0; } .results-inner { padding:24px; gap:12px; } footer { margin-inline:20px; flex-direction:column; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
   </style>
 </head>
 <body>
-  <nav class="nav" aria-label="Diagrams">
+  <a class="skip" href="#top">Skip to content</a>
+  <nav class="nav" aria-label="Main navigation">
     <div class="nav-inner">
-      <a class="brand" href="#top"><span class="logo" aria-hidden="true"></span> linegate</a>
+      <a class="brand" href="#top"><span class="logo" aria-hidden="true">↳</span> linegate</a>
       <div class="nav-links">
+        <a href="#product" data-section="product">Product</a>
         <a href="#architecture" data-section="architecture">Architecture</a>
         <a href="#sequence" data-section="sequence">Sequence</a>
         <a href="#dataflow" data-section="dataflow">Data flow</a>
@@ -84,22 +97,46 @@
     </div>
   </nav>
 
+  <main>
   <section class="hero" id="top">
-    <div class="eyebrow">System diagrams</div>
-    <h1>Honest failure prediction, priced in dollars.</h1>
-    <p class="lead">linegate predicts which parts on the Bosch production line will fail, turns every score into a
-      ship, inspect, or human-review decision at the lowest expected cost, and keeps its LLM agents inside
-      code-enforced guardrails. Scroll through the three views below; each diagram is interactive, with pan, zoom, search, and guided stories.</p>
-    <div class="stats">
-      <div class="stat"><b>1.18M</b><span>parts, 4,264 sensor columns</span></div>
-      <div class="stat"><b>$2,090</b><span>saved per shift on the sealed holdout</span></div>
-      <div class="stat"><b>9</b><span>features quarantined by the warden</span></div>
-      <div class="stat"><b>0 of 6</b><span>agent write-ups with fabricated citations</span></div>
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Machine learning · Manufacturing quality</div>
+        <h1>From prediction to <em>better decisions.</em></h1>
+        <p class="lead">An end-to-end ML system that turns production data into cost-based quality decisions—and gives engineers the evidence to review uncertain parts.</p>
+        <div class="jump">
+          <a class="chip primary" href="#architecture">Explore the architecture <span aria-hidden="true">↓</span></a>
+          <a class="chip" href="https://github.com/abh2050/linegate">View source <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="stack" aria-label="Technology stack"><span>Python</span><span>LightGBM</span><span>DuckDB</span><span>FastAPI</span><span>React</span></div>
+      </div>
+      <div class="preview">
+        <div class="preview-top"><span>LINEGATE / REVIEW CONSOLE</span><span class="status">Human review</span></div>
+        <a href="#product"><img src="screenshots/01-review-queue-agent-writeup.png" alt="Review console showing a part score, production route, and evidence summary" fetchpriority="high" /></a>
+        <h2>A model score. A clear next step.</h2>
+        <p>Connect failure predictions to inspection costs, supporting evidence, and an engineer’s judgment.</p>
+        <div class="workflow" aria-label="Decision workflow"><span>Predict</span> → <span>Price</span> → <span>Review</span></div>
+      </div>
     </div>
-    <div class="jump">
-      <a class="chip" href="#architecture">01 Architecture <i>components and guardrails</i></a>
-      <a class="chip" href="#sequence">02 Sequence <i>a feature proposal</i></a>
-      <a class="chip" href="#dataflow">03 Data flow <i>raw files to decisions</i></a>
+    <div class="stats">
+      <div class="stat"><b>1.18M</b><span>labeled production parts</span></div>
+      <div class="stat"><b>~$2,090</b><span>modeled savings per shift*</span></div>
+      <div class="stat"><b>25.7%</b><span>of holdout parts routed to review</span></div>
+      <div class="stat"><b>9</b><span>features quarantined</span></div>
+    </div>
+    <p class="metric-note">*Offline holdout estimate versus shipping all parts, under project cost and volume assumptions. Not measured factory savings. <a href="#results">See results and limitations →</a></p>
+  </section>
+
+  <section class="product" id="product">
+    <div class="section-intro"><div class="num">The product</div><h2>Built for the person making the call.</h2><p>A focused review workspace brings the model’s prediction and the part’s production history into one view.</p></div>
+    <div class="product-card">
+      <a class="product-image" href="screenshots/04-multi-line-route-with-citations.png" target="_blank" rel="noopener"><img src="screenshots/04-multi-line-route-with-citations.png" alt="Expanded review console with multi-line production route and validated evidence citations" loading="lazy" /></a>
+      <div class="product-copy">
+        <h3>Understand the recommendation</h3><p>See the part’s score against ship, review, and inspect zones defined by the cost policy.</p>
+        <h3>Inspect the supporting evidence</h3><p>Follow the production route and read an agent summary whose citations are checked against returned evidence.</p>
+        <h3>Make and record a decision</h3><p>Ship, scrap, or escalate with keyboard actions. Confirmed decisions are stored as labels for future training.</p>
+        <a href="screenshots/01-review-queue-agent-writeup.png" target="_blank" rel="noopener">View full-size console capture ↗</a>
+      </div>
     </div>
   </section>
 
@@ -113,9 +150,9 @@
       </div>
       <div class="actions"><a class="btn" href="diagrams/architecture.html" target="_blank" rel="noopener">Open full screen ↗</a></div>
     </header>
-    <div class="frame"><iframe src="diagrams/architecture.html" title="linegate system architecture" loading="lazy"></iframe></div>
+    <div class="frame"><div class="frame-bar"><span>INTERACTIVE DIAGRAM</span><span>Pan · Zoom · Search · Guided stories</span></div><iframe src="diagrams/architecture.html" title="linegate system architecture" loading="lazy"></iframe></div>
     <div class="takeaways">
-      <div><strong>No LLM scores a part</strong>LightGBM decides; agents only propose, explain, or open pull requests.</div>
+      <div><strong>No LLM scores a part</strong>LightGBM scores parts; the cost policy selects actions. Agents propose, explain, or prepare policy changes.</div>
       <div><strong>The warden has a veto</strong>Three leak tests plus a deterministic rule the model cannot override.</div>
       <div><strong>People own the edges</strong>Uncertain parts go to reviewers; cost changes arrive as unmerged PRs.</div>
     </div>
@@ -131,7 +168,7 @@
       </div>
       <div class="actions"><a class="btn" href="diagrams/sequence.html" target="_blank" rel="noopener">Open full screen ↗</a></div>
     </header>
-    <div class="frame"><iframe src="diagrams/sequence.html" title="Feature proposal sequence" loading="lazy"></iframe></div>
+    <div class="frame"><div class="frame-bar"><span>INTERACTIVE DIAGRAM</span><span>Pan · Zoom · Search · Guided stories</span></div><iframe src="diagrams/sequence.html" title="Feature proposal sequence" loading="lazy"></iframe></div>
     <div class="takeaways">
       <div><strong>Guarded before registered</strong>Only one SELECT over sandbox views; no windows, labels, or holdout Ids.</div>
       <div><strong>Stricter verdict wins</strong>If the model approves a leak, the rule quarantines it, and a quarantine is final.</div>
@@ -149,13 +186,21 @@
       </div>
       <div class="actions"><a class="btn" href="diagrams/dataflow.html" target="_blank" rel="noopener">Open full screen ↗</a></div>
     </header>
-    <div class="frame"><iframe src="diagrams/dataflow.html" title="linegate data flow" loading="lazy"></iframe></div>
+    <div class="frame"><div class="frame-bar"><span>INTERACTIVE DIAGRAM</span><span>Pan · Zoom · Search · Guided stories</span></div><iframe src="diagrams/dataflow.html" title="linegate data flow" loading="lazy"></iframe></div>
     <div class="takeaways">
       <div><strong>Contract first</strong>Every raw load verifies sha256; no code path substitutes sampled data.</div>
       <div><strong>Dollars, not accuracy</strong>Inspect $6.50, scrap $42, field failure $1,850 drive the threshold.</div>
-      <div><strong>Honest proof</strong>Holdout MCC 0.110 reported beside the leaky leaderboard 0.49 it refuses.</div>
+      <div><strong>Transparent evaluation</strong>Holdout MCC of 0.110 is published alongside validation MCC of 0.227.</div>
     </div>
   </section>
+
+  <section class="results" id="results">
+    <div class="results-inner">
+      <div><div class="num">Results with context</div><h2>Measured outcomes.<br />Documented tradeoffs.</h2><p>This portfolio project uses historical Bosch competition data. The sealed holdout was evaluated once, and the findings include both the gains and the limitations.</p><a class="btn" href="https://github.com/abh2050/linegate/blob/main/docs/scorecard.md">Read the evaluation scorecard ↗</a></div>
+      <div><div class="result-row"><span>MCC · validation → holdout</span><strong>0.227 → 0.110</strong></div><div class="result-row"><span>Holdout cost per shift · policy / ship all</span><strong>$18,010 / $20,099</strong></div><div class="result-row"><span>Feature-search acceptance gate</span><strong>Not passed</strong></div><p>Performance declined on later production data. No proposed feature cleared the noise-calibrated acceptance bar. Cost estimates evaluate the policy threshold, not realized savings from human review.</p></div>
+    </div>
+  </section>
+  </main>
 
   <footer>
     <span>linegate · Bosch Production Line Performance data · diagrams rendered with Archify</span>
@@ -167,10 +212,15 @@
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
-        links.forEach((a) => a.classList.toggle('active', a.dataset.section === entry.target.id));
+        links.forEach((a) => {
+          const active = a.dataset.section === entry.target.id;
+          a.classList.toggle('active', active);
+          if (active) a.setAttribute('aria-current', 'location');
+          else a.removeAttribute('aria-current');
+        });
       }
     }, { rootMargin: '-45% 0px -50% 0px' });
-    document.querySelectorAll('section.diagram').forEach((s) => observer.observe(s));
+    document.querySelectorAll('section[id]').forEach((s) => observer.observe(s));
   </script>
 </body>
 </html>
